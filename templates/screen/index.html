@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciar Telas - NOTIF</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .sidebar {
+            min-height: 100vh;
+            background: #343a40;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 250px;
+            z-index: 1000;
+        }
+
+        .sidebar .nav-link {
+            color: #adb5bd;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #495057;
+        }
+
+        .sidebar .nav-link:hover {
+            color: #fff;
+            background: #495057;
+        }
+
+        .sidebar .nav-link.active {
+            color: #fff;
+            background: #007bff;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 2rem;
+        }
+
+        .brand {
+            color: #fff !important;
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-align: center;
+            padding: 2rem 0;
+            border-bottom: 1px solid #495057;
+            text-decoration: none;
+        }
+
+        .tela-card {
+            transition: transform 0.2s;
+        }
+
+        .tela-card:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <a href="#" class="brand d-block">
+            <i class="fas fa-tv me-2"></i>NOTIF
+        </a>
+        <nav class="nav flex-column">
+            <a href="/vertelas" class="nav-link active">
+                <i class="fas fa-list me-2"></i>Listar Telas
+            </a>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3">
+                <i class="fas fa-tv me-2"></i>Gerenciar Telas de Exibição
+            </h1>
+        </div>
+
+        {% if telas %}
+            <div class="row">
+                {% for tela in telas %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card tela-card h-100 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="fas fa-desktop me-2"></i>{{ tela.name }}
+                            </h5>
+                            <p class="card-text text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                {% if tela.temRodape %}
+                                    <span class="badge bg-success">Com rodapé</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Sem rodapé</span>
+                                {% endif %}
+                            </p>
+                            {% if tela.footer_text %}
+                            <p class="card-text">
+                                <small class="text-muted">
+                                    <i class="fas fa-quote-left me-1"></i>
+                                    {{ tela.footer_text[:50] }}{% if tela.footer_text|length > 50 %}...{% endif %}
+                                </small>
+                            </p>
+                            {% endif %}
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            <div class="d-flex gap-2">
+                                <a href="/tela/{{ tela.id }}" class="btn btn-success btn-sm flex-fill">
+                                    <i class="fas fa-play me-1"></i>Visualizar
+                                </a>
+                                <a href="/editartela/{{ tela.id }}" class="btn btn-primary btn-sm flex-fill">
+                                    <i class="fas fa-edit me-1"></i>Editar
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-tv fa-4x text-muted mb-3"></i>
+                <h3 class="text-muted">Nenhuma tela cadastrada</h3>
+                <p class="text-muted">Crie sua primeira tela de exibição</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

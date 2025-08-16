@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Tela - {{ screen.name }} - NOTIF</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .sidebar {
+            min-height: 100vh;
+            background: #343a40;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 250px;
+            z-index: 1000;
+        }
+
+        .sidebar .nav-link {
+            color: #adb5bd;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #495057;
+        }
+
+        .sidebar .nav-link:hover {
+            color: #fff;
+            background: #495057;
+        }
+
+        .sidebar .nav-link.active {
+            color: #fff;
+            background: #007bff;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 2rem;
+        }
+
+        .brand {
+            color: #fff !important;
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-align: center;
+            padding: 2rem 0;
+            border-bottom: 1px solid #495057;
+            text-decoration: none;
+        }
+
+        .media-column {
+            min-height: 500px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .column-left {
+            background: #f8f9fa;
+        }
+
+        .media-item {
+            transition: all 0.3s;
+            cursor: move;
+        }
+
+        .media-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        .media-preview {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 6px;
+        }
+
+        .drag-over {
+            border-color: #007bff;
+            background-color: #e3f2fd;
+        }
+
+        .empty-message {
+            text-align: center;
+            color: #6c757d;
+            font-style: italic;
+            padding: 3rem 1rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <a href="#" class="brand d-block">
+            <i class="fas fa-tv me-2"></i>NOTIF
+        </a>
+        <nav class="nav flex-column">
+            <a href="/vertelas" class="nav-link">
+                <i class="fas fa-list me-2"></i>Listar Telas
+            </a>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3">
+                <i class="fas fa-edit me-2"></i>Editar Tela: {{ screen.name }}
+            </h1>
+            <a href="/vertelas" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i>Voltar
+            </a>
+        </div>
+
+        <form method="POST" id="editForm">
+            <!-- Campos básicos -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-cog me-2"></i>Configurações Básicas</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Nome da Tela:</label>
+                                <input type="text" class="form-control" id="name" name="name" value="{{ screen.name }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" id="temRodape" name="temRodape" {% if screen.temRodape %}checked{% endif %}>
+                                    <label class="form-check-label" for="temRodape">
+                                        <i class="fas fa-align-center me-1"></i>Exibir Rodapé
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="footer_text" class="form-label">Texto do Rodapé:</label>
+                        <textarea class="form-control" id="footer_text" name="footer_text" rows="3" placeholder="Digite o texto que aparecerá no rodapé">{{ screen.footer_text or '' }}</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Abas para lados -->
+            <div class="card">
+                <div class="card-header">
+                    <ul class="nav nav-tabs card-header-tabs" id="sidesTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="left-tab-btn" data-bs-toggle="tab" data-bs-target="#left-tab" type="button" role="tab">
+                                <i class="fas fa-arrow-left me-1"></i>Lado Esquerdo
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="right-tab-btn" data-bs-toggle="tab" data-bs-target="#right-tab" type="button" role="tab">
+                                <i class="fas fa-arrow-right me-1"></i>Lado Direito
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="card-body">
+                    <div class="tab-content" id="sidesTabsContent">
+                        <!-- Aba Lado Esquerdo -->
+                        <div class="tab-pane fade show active" id="left-tab" role="tabpanel">
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" id="left_instagram" name="left_instagram">
+                                    <label class="form-check-label" for="left_instagram">
+                                        <i class="fab fa-instagram me-1"></i>Integração Instagram
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="media-column column-left">
+                                        <h6 class="mb-3"><i class="fas fa-images me-2"></i>Mídias do Lado Esquerdo</h6>
+                                        <input type="text" class="form-control mb-3" placeholder="Filtrar por nome..." onkeyup="filterMedia('left', 'side', this.value)">
+                                        <div id="left-side-media" class="media-list">
+                                            <div id="leftEmptyMessage" class="empty-message">
+                                                <i class="fas fa-plus-circle fa-2x mb-2"></i>
+                                                <div>Nenhuma mídia selecionada</div>
+                                                <small>Arraste mídias do banco ou clique no botão +</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="media-column">
+                                        <h6 class="mb-3"><i class="fas fa-database me-2"></i>Banco de Mídias</h6>
+                                        <input type="text" class="form-control mb-3" placeholder="Filtrar por nome..." onkeyup="filterMedia('left', 'bank', this.value)">
+                                        <div id="left-bank-media" class="media-list">
+                                            <!-- Mídias do banco serão carregadas aqui -->
+                                        </div>
+
+                                        <div class="mt-3 p-3 border border-dashed rounded">
+                                            <input type="file" class="form-control mb-2" accept="image/*,video/*" onchange="uploadFile(this)">
+                                            <div class="text-center text-muted">
+                                                <i class="fas fa-cloud-upload-alt me-1"></i>
+                                                Arraste arquivos aqui ou clique para selecionar
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Aba Lado Direito -->
+                        <div class="tab-pane fade" id="right-tab" role="tabpanel">
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" id="right_instagram" name="right_instagram">
+                                    <label class="form-check-label" for="right_instagram">
+                                        <i class="fab fa-instagram me-1"></i>Integração Instagram
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="media-column column-left">
+                                        <h6 class="mb-3"><i class="fas fa-images me-2"></i>Mídias do Lado Direito</h6>
+                                        <input type="text" class="form-control mb-3" placeholder="Filtrar por nome..." onkeyup="filterMedia('right', 'side', this.value)">
+                                        <div id="right-side-media" class="media-list">
+                                            <div id="rightEmptyMessage" class="empty-message">
+                                                <i class="fas fa-plus-circle fa-2x mb-2"></i>
+                                                <div>Nenhuma mídia selecionada</div>
+                                                <small>Arraste mídias do banco ou clique no botão +</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="media-column">
+                                        <h6 class="mb-3"><i class="fas fa-database me-2"></i>Banco de Mídias</h6>
+                                        <input type="text" class="form-control mb-3" placeholder="Filtrar por nome..." onkeyup="filterMedia('right', 'bank', this.value)">
+                                        <div id="right-bank-media" class="media-list">
+                                            <!-- Mídias do banco serão carregadas aqui -->
+                                        </div>
+
+                                        <div class="mt-3 p-3 border border-dashed rounded">
+                                            <input type="file" class="form-control mb-2" accept="image/*,video/*" onchange="uploadFile(this)">
+                                            <div class="text-center text-muted">
+                                                <i class="fas fa-cloud-upload-alt me-1"></i>
+                                                Arraste arquivos aqui ou clique para selecionar
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Campos ocultos para envio -->
+            <div id="hidden-fields"></div>
+
+            <div class="text-center mt-4">
+                <button type="submit" class="btn btn-primary btn-lg me-3">
+                    <i class="fas fa-save me-1"></i>Salvar Alterações
+                </button>
+                <a href="/vertelas" class="btn btn-secondary btn-lg">
+                    <i class="fas fa-times me-1"></i>Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Campos ocultos para envio -->
+<div id="hidden-fields"></div>
+
+<div class="text-center mt-4">
+    <button type="submit" class="btn btn-primary btn-lg me-3">
+        <i class="fas fa-save me-1"></i>Salvar Alterações
+    </button>
+    <a href="/vertelas" class="btn btn-secondary btn-lg">
+        <i class="fas fa-times me-1"></i>Cancelar
+    </a>
+</div>
+</form>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// Dados do servidor
+const availableFiles = {{ available_files|tojson|safe }};
+const leftConfig = {{ left_config|tojson|safe }};
+const rightConfig = {{ right_config|tojson|safe }};
+
+console.log('Available files:', availableFiles);
+console.log('Left config:', leftConfig);
+console.log('Right config:', rightConfig);
+
+// Bancos de mídia independentes para cada aba
+let leftBankMedia = [...availableFiles];
+let rightBankMedia = [...availableFiles];
+
+// Mídias selecionadas para cada lado
+let leftSideMedia = [];
+let rightSideMedia = [];
+
+function createMediaElement(file, side, location, hasAudio = true) {
+    const div = document.createElement('div');
+    div.className = 'card mb-2 media-item';
+    div.draggable = true;
+    div.dataset.fileId = file.id;
+
+    const isVideo = file.is_video;
+    const mediaElement = isVideo ? 'video' : 'img';
+
+    div.innerHTML = `
+        <div class="card-body p-2">
+            <div class="d-flex align-items-center">
+                <${mediaElement} class="media-preview me-3" src="/static/files/${file.file_name}" ${isVideo ? 'muted' : ''}></${mediaElement}>
+                <div class="flex-grow-1">
+                    <div class="fw-bold">${file.original_name || file.file_name}</div>
+                    <small class="text-muted">
+                        <i class="fas fa-${isVideo ? 'video' : 'image'} me-1"></i>
+                        ${isVideo ? 'Vídeo' : 'Imagem'}
+                    </small>
+                    ${location === 'side' && isVideo ? `
+                        <div class="form-check mt-1">
+                            <input type="checkbox" class="form-check-input" ${hasAudio ? 'checked' : ''}
+                                   onchange="toggleAudio('${side}', ${file.id}, this.checked)">
+                            <label class="form-check-label">
+                                <i class="fas fa-volume-up me-1"></i>Áudio
+                            </label>
+                        </div>
+                    ` : ''}
+                </div>
+                <div class="ms-2">
+                    ${location === 'side' ? `
+                        <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeFromSide('${side}', ${file.id})">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                    ` : `
+                        <button type="button" class="btn btn-outline-success btn-sm" onclick="addToSide('${side}', ${file.id})">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    `}
+                </div>
+            </div>
+        </div>
+    `;
+
+    return div;
+}
+
+function renderSideMedia(side) {
+    const container = document.getElementById(side + '-side-media');
+    const emptyMessage = document.getElementById(side + 'EmptyMessage');
+    const mediaList = side === 'left' ? leftSideMedia : rightSideMedia;
+
+    // Limpar container mantendo a mensagem vazia
+    const items = container.querySelectorAll('.media-item');
+    items.forEach(item => item.remove());
+
+    if (mediaList.length === 0) {
+        emptyMessage.style.display = 'block';
+    } else {
+        emptyMessage.style.display = 'none';
+        mediaList.forEach(item => {
+            const element = createMediaElement(item.file, side, 'side', item.has_audio);
+            container.appendChild(element);
+        });
+    }
+}
+
+function renderBankMedia(side) {
+    const container = document.getElementById(side + '-bank-media');
+    const bankMedia = side === 'left' ? leftBankMedia : rightBankMedia;
+
+    console.log(`Rendering bank media for ${side}:`, bankMedia);
+
+    container.innerHTML = '';
+
+    if (bankMedia.length === 0) {
+        container.innerHTML = '<div class="text-center text-muted p-3">Nenhuma mídia disponível</div>';
+        return;
+    }
+
+    bankMedia.forEach(file => {
+        const element = createMediaElement(file, side, 'bank');
+        container.appendChild(element);
+    });
+}
+
+function addToSide(side, fileId) {
+    const bankMedia = side === 'left' ? leftBankMedia : rightBankMedia;
+    const sideMedia = side === 'left' ? leftSideMedia : rightSideMedia;
+
+    const fileIndex = bankMedia.findIndex(f => f.id == fileId);
+    if (fileIndex !== -1) {
+        const file = bankMedia.splice(fileIndex, 1)[0];
+        sideMedia.push({
+            file: file,
+            has_audio: true
+        });
+
+        // Atualizar renders
+        renderSideMedia(side);
+        renderBankMedia(side);
+        updateHiddenFields();
+    }
+}
+
+function removeFromSide(side, fileId) {
+    const sideMedia = side === 'left' ? leftSideMedia : rightSideMedia;
+    const bankMedia = side === 'left' ? leftBankMedia : rightBankMedia;
+
+    const itemIndex = sideMedia.findIndex(item => item.file.id == fileId);
+    if (itemIndex !== -1) {
+        const item = sideMedia.splice(itemIndex, 1)[0];
+        bankMedia.push(item.file);
+
+        // Atualizar renders
+        renderSideMedia(side);
+        renderBankMedia(side);
+        updateHiddenFields();
+    }
+}
+
+function toggleAudio(side, fileId, hasAudio) {
+    const sideMedia = side === 'left' ? leftSideMedia : rightSideMedia;
+    const item = sideMedia.find(item => item.file.id == fileId);
+    if (item) {
+        item.has_audio = hasAudio;
+        updateHiddenFields();
+    }
+}
+
+function filterMedia(side, location, searchTerm) {
+    const containerId = side + '-' + location + '-media';
+    const container = document.getElementById(containerId);
+    const items = container.querySelectorAll('.media-item');
+
+    items.forEach(item => {
+        const name = item.querySelector('.fw-bold').textContent.toLowerCase();
+        if (name.includes(searchTerm.toLowerCase())) {
+            item.style.display = 'block';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
+function updateHiddenFields() {
+    const hiddenFields = document.getElementById('hidden-fields');
+    hiddenFields.innerHTML = '';
+
+    // Adicionar campos para lado esquerdo
+    leftSideMedia.forEach(item => {
+        const fileInput = document.createElement('input');
+        fileInput.type = 'hidden';
+        fileInput.name = 'left_files[]';
+        fileInput.value = item.file.id;
+        hiddenFields.appendChild(fileInput);
+
+        if (item.has_audio) {
+            const audioInput = document.createElement('input');
+            audioInput.type = 'hidden';
+            audioInput.name = 'left_audio[]';
+            audioInput.value = item.file.id;
+            hiddenFields.appendChild(audioInput);
+        }
+    });
+
+    // Adicionar campos para lado direito
+    rightSideMedia.forEach(item => {
+        const fileInput = document.createElement('input');
+        fileInput.type = 'hidden';
+        fileInput.name = 'right_files[]';
+        fileInput.value = item.file.id;
+        hiddenFields.appendChild(fileInput);
+
+        if (item.has_audio) {
+            const audioInput = document.createElement('input');
+            audioInput.type = 'hidden';
+            audioInput.name = 'right_audio[]';
+            audioInput.value = item.file.id;
+            hiddenFields.appendChild(audioInput);
+        }
+    });
+}
+
+async function uploadFile(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+        const response = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            // Adicionar novo arquivo aos bancos de mídia
+            const newFile = result.file;
+            leftBankMedia.push(newFile);
+            rightBankMedia.push(newFile);
+
+            // Re-renderizar bancos
+            renderBankMedia('left');
+            renderBankMedia('right');
+
+            // Limpar input
+            input.value = '';
+
+            // Mostrar toast de sucesso
+            showToast('Arquivo enviado com sucesso!', 'success');
+        } else {
+            showToast('Erro ao enviar arquivo: ' + result.error, 'danger');
+        }
+    } catch (error) {
+        showToast('Erro ao enviar arquivo: ' + error.message, 'danger');
+    }
+}
+
+function showToast(message, type) {
+    // Criar toast do Bootstrap
+    const toastHTML = `
+        <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong class="me-auto">NOTIF</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body bg-${type} text-white">
+                ${message}
+            </div>
+        </div>
+    `;
+
+    // Adicionar ao body e mostrar
+    let toastContainer = document.querySelector('.toast-container');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+        document.body.appendChild(toastContainer);
+    }
+
+    toastContainer.insertAdjacentHTML('beforeend', toastHTML);
+    const toast = new bootstrap.Toast(toastContainer.lastElementChild);
+    toast.show();
+}
+
+// Inicialização
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, initializing...');
+
+    // Carregar configurações existentes
+    leftConfig.forEach(config => {
+        if (config.files) {
+            leftSideMedia.push({
+                file: config.files,
+                has_audio: config.has_audio
+            });
+
+            // Remover do banco de mídia da esquerda
+            const index = leftBankMedia.findIndex(f => f.id === config.files.id);
+            if (index !== -1) {
+                leftBankMedia.splice(index, 1);
+            }
+        }
+    });
+
+    rightConfig.forEach(config => {
+        if (config.files) {
+            rightSideMedia.push({
+                file: config.files,
+                has_audio: config.has_audio
+            });
+
+            // Remover do banco de mídia da direita
+            const index = rightBankMedia.findIndex(f => f.id === config.files.id);
+            if (index !== -1) {
+                rightBankMedia.splice(index, 1);
+            }
+        }
+    });
+
+    console.log('After loading configs:');
+    console.log('Left side media:', leftSideMedia);
+    console.log('Right side media:', rightSideMedia);
+    console.log('Left bank media:', leftBankMedia);
+    console.log('Right bank media:', rightBankMedia);
+
+    // Renderizar tudo
+    renderSideMedia('left');
+    renderSideMedia('right');
+    renderBankMedia('left');
+    renderBankMedia('right');
+    updateHiddenFields();
+
+    console.log('Initialization complete');
+});
+</script>
+</body>
+</html>

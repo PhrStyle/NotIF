@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ screen.name }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            background: #000;
+            color: white;
+        }
+
+        .main-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .display-area {
+            {% if screen.temRodape %}
+            height: 80%;
+            {% else %}
+            height: 100%;
+            {% endif %}
+            display: flex;
+        }
+
+        .side-display {
+            width: 50%;
+            height: 100%;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #111;
+        }
+
+        .left-side {
+            border-right: 2px solid #333;
+        }
+
+        .media-content {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .footer {
+            {% if screen.temRodape %}
+            height: 20%;
+            display: flex;
+            {% else %}
+            display: none;
+            {% endif %}
+            background: #222;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            font-size: 24px;
+            text-align: center;
+        }
+
+        .no-media {
+            color: #666;
+            font-size: 18px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="display-area">
+            <!-- Lado esquerdo -->
+            <div class="side-display left-side" id="left-display">
+                {% if left_files %}
+                    <div class="no-media">Carregando mídia...</div>
+                {% else %}
+                    <div class="no-media">Nenhuma mídia configurada</div>
+                {% endif %}
+            </div>
+
+            <!-- Lado direito -->
+            <div class="side-display" id="right-display">
+                {% if right_files %}
+                    <div class="no-media">Carregando mídia...</div>
+                {% else %}
+                    <div class="no-media">Nenhuma mídia configurada</div>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if screen.temRodape %}
+        <div class="footer">
+            {{ screen.footer_text if screen.footer_text else "Rodapé da tela" }}
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        // Dados das mídias
+        const leftFiles = {{ left_files|tojson|safe }};
+        const rightFiles = {{ right_files|tojson|safe }};
+
+        let leftIndex = 0;
+        let rightIndex = 0;
+        let leftTimer, rightTimer;
+
+        function displayMedia(files, container, index) {
+            if (!files || files.length === 0) return;
+
+            const file = files[index];
+            const mediaPath = `/static/files/${file.file_name}`;
+
+            let mediaElement;
+            if (file.is_video) {
+                mediaElement = document.createElement('video');
+                mediaElement.src = mediaPath;
+                mediaElement.muted = !file.has_audio;
+                mediaElement.autoplay = true;
+                mediaElement.className = 'media-content';
+
+                // Quando o vídeo terminar, avançar para próxima mídia
+                mediaElement.addEventListener('ended', () => {
+                    if (container.id === 'left-display') {
+                        nextLeftMedia();
+                    } else {
+                        nextRightMedia();
+                    }
+                });
+            } else {
+                mediaElement = document.createElement('img');
+                mediaElement.src = mediaPath;
+                mediaElement.className = 'media-content';
+            }
+
+            // Limpar container e adicionar nova mídia
+            container.innerHTML = '';
+            container.appendChild(mediaElement);
+        }
+
+        function nextLeftMedia() {
+            if (leftFiles.length === 0) return;
+
+            clearTimeout(leftTimer);
+            leftIndex = (leftIndex + 1) % leftFiles.length;
+            displayMedia(leftFiles, document.getElementById('left-display'), leftIndex);
+
+            // Se não for vídeo, definir timer de 15 segundos
+            const currentFile = leftFiles[leftIndex];
+            if (!currentFile.is_video) {
+                leftTimer = setTimeout(nextLeftMedia, 15000);
+            }
+        }
+
+        function nextRightMedia() {
+            if (rightFiles.length === 0) return;
+
+            clearTimeout(rightTimer);
+            rightIndex = (rightIndex + 1) % rightFiles.length;
+            displayMedia(rightFiles, document.getElementById('right-display'), rightIndex);
+
+            // Se não for vídeo, definir timer de 15 segundos
+            const currentFile = rightFiles[rightIndex];
+            if (!currentFile.is_video) {
+                rightTimer = setTimeout(nextRightMedia, 15000);
+            }
+        }
+
+        // Inicializar displays
+        if (leftFiles.length > 0) {
+            displayMedia(leftFiles, document.getElementById('left-display'), 0);
+            if (!leftFiles[0].is_video) {
+                leftTimer = setTimeout(nextLeftMedia, 15000);
+            }
+        }
+
+        if (rightFiles.length > 0) {
+            displayMedia(rightFiles, document.getElementById('right-display'), 0);
+            if (!rightFiles[0].is_video) {
+                rightTimer = setTimeout(nextRightMedia, 15000);
+            }
+        }
+    </script>
+</body>
+</html>
+
