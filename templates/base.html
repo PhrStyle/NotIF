@@ -15,22 +15,25 @@
             left: 0;
             width: 200px;
             z-index: 1000;
+            border-right: 1px solid #dee2e6;
         }
 
         .sidebar .nav-link {
-            color: #adb5bd;
+            color: #495057;
             padding: 1rem 1.5rem;
-            border-bottom: 1px solid #495057;
+            border-bottom: 1px solid #dee2e6;
+            transition: all 0.3s;
         }
 
         .sidebar .nav-link:hover {
-            color: #fff;
-            background: #495057;
+            color: #007bff;
+            background: #e3f2fd;
         }
 
         .sidebar .nav-link.active {
-            color: #fff;
-            background: #007bff;
+            color: #007bff;
+            background: #e3f2fd;
+            border-left: 3px solid #007bff;
         }
 
         .main-content {
@@ -39,13 +42,17 @@
         }
 
         .brand {
-            color: #fff !important;
-            font-size: 1.5rem;
+            color: #000000 !important;
+            font-size: 2rem;
             font-weight: bold;
             text-align: center;
             padding: 2rem 0;
-            border-bottom: 1px solid #495057;
+            border-bottom: 1px solid #dee2e6;
             text-decoration: none;
+        }
+
+        .brand:hover {
+            color: #007bff !important;
         }
 
         {% block extra_css %}{% endblock %}
@@ -55,7 +62,7 @@
     <!-- Sidebar -->
     <div class="sidebar">
         <a href="#" class="brand d-block">
-            <i class="fas fa-tv me-2"></i>NOTIF
+            <i class="fas fa-tv me-2"></i>NOT<span style="color: green;">IF</span>
         </a>
         <nav class="nav flex-column">
             <a href="/vertelas" class="nav-link {% if request.endpoint == 'screens_bp.ver_telas' %}active{% endif %}">

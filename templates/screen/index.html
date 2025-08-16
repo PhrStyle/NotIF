@@ -7,126 +7,284 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        .sidebar {
-            min-height: 100vh;
-            background: #343a40;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 250px;
-            z-index: 1000;
-        }
-
-        .sidebar .nav-link {
-            color: #adb5bd;
-            padding: 1rem 1.5rem;
-            border-bottom: 1px solid #495057;
-        }
-
-        .sidebar .nav-link:hover {
-            color: #fff;
-            background: #495057;
-        }
-
-        .sidebar .nav-link.active {
-            color: #fff;
-            background: #007bff;
-        }
-
-        .main-content {
-            margin-left: 250px;
-            padding: 2rem;
-        }
-
-        .brand {
-            color: #fff !important;
-            font-size: 1.5rem;
-            font-weight: bold;
-            text-align: center;
-            padding: 2rem 0;
-            border-bottom: 1px solid #495057;
-            text-decoration: none;
-        }
-
         .tela-card {
             transition: transform 0.2s;
+            min-width: 270px;
+            max-width: 270px;
         }
 
         .tela-card:hover {
             transform: translateY(-2px);
         }
+
+        .tela-miniatura {
+            width: 100%;
+            max-width: 250px;
+            height: 150px;
+            margin: 0 auto 15px auto;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            background: #000;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tela-miniatura.sem-rodape {
+            height: 120px;
+        }
+
+        .miniatura-content {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .miniatura-display {
+            display: flex;
+            flex: 1;
+        }
+
+        .miniatura-side {
+            flex: 1;
+            background: #333;
+            border-right: 1px solid #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            font-size: 12px;
+        }
+
+        .miniatura-side:last-child {
+            border-right: none;
+        }
+
+        .miniatura-footer {
+            height: 25px;
+            background: #444;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #aaa;
+            font-size: 10px;
+            border-top: 1px solid #666;
+        }
+
+        .search-container {
+            position: relative;
+        }
+
+        .search-container .fa-search {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+        }
+
+        .search-input {
+            padding-left: 40px;
+        }
     </style>
 </head>
 <body>
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <a href="#" class="brand d-block">
-            <i class="fas fa-tv me-2"></i>NOTIF
-        </a>
-        <nav class="nav flex-column">
-            <a href="/vertelas" class="nav-link active">
-                <i class="fas fa-list me-2"></i>Listar Telas
-            </a>
-        </nav>
+    {% extends "base.html" %}
+
+    {% block title %}Gerenciar Telas - NOTIF{% endblock %}
+
+    {% block extra_css %}
+    .tela-card {
+        transition: transform 0.2s;
+        min-width: 270px;
+        max-width: 270px;
+    }
+
+    .tela-card:hover {
+        transform: translateY(-2px);
+    }
+
+    .tela-miniatura {
+        width: 100%;
+        max-width: 250px;
+        height: 150px;
+        margin: 0 auto 15px auto;
+        border: 2px solid #dee2e6;
+        border-radius: 8px;
+        background: #000;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .tela-miniatura.sem-rodape {
+        height: 120px;
+    }
+
+    .miniatura-content {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .miniatura-display {
+        display: flex;
+        flex: 1;
+    }
+
+    .miniatura-side {
+        flex: 1;
+        background: #333;
+        border-right: 1px solid #666;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #999;
+        font-size: 12px;
+    }
+
+    .miniatura-side:last-child {
+        border-right: none;
+    }
+
+    .miniatura-footer {
+        height: 25px;
+        background: #444;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #aaa;
+        font-size: 10px;
+        border-top: 1px solid #666;
+    }
+
+    .search-container {
+        position: relative;
+    }
+
+    .search-container .fa-search {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+    }
+
+    .search-input {
+        padding-left: 40px;
+    }
+    {% endblock %}
+
+    {% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">
+            <i class="fas fa-tv me-2"></i>Gerenciar Telas de Exibição
+        </h1>
+        <div class="search-container">
+            <i class="fas fa-search"></i>
+            <input type="text" class="form-control search-input" id="searchInput" placeholder="Filtrar telas..." style="width: 300px;">
+        </div>
     </div>
 
-    <!-- Main Content -->
-    <div class="main-content">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1 class="h3">
-                <i class="fas fa-tv me-2"></i>Gerenciar Telas de Exibição
-            </h1>
-        </div>
-
-        {% if telas %}
-            <div class="row">
-                {% for tela in telas %}
-                <div class="col-md-6 col-lg-4 mb-4">
-                    <div class="card tela-card h-100 shadow-sm">
-                        <div class="card-body">
-                            <h5 class="card-title">
-                                <i class="fas fa-desktop me-2"></i>{{ tela.name }}
-                            </h5>
-                            <p class="card-text text-muted">
-                                <i class="fas fa-info-circle me-1"></i>
+    {% if telas %}
+        <div class="row" id="telasContainer">
+            {% for tela in telas %}
+            <div class="col-md-6 col-lg-4 mb-4 tela-item" data-name="{{ tela.name|lower }}">
+                <div class="card tela-card h-100 shadow-sm">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">
+                            <i class="fas fa-desktop me-2"></i>{{ tela.name }}
+                        </h5>
+                        <!-- Miniatura da tela -->
+                        <div class="tela-miniatura{% if not tela.temRodape %} sem-rodape{% endif %}">
+                            <div class="miniatura-content">
+                                <div class="miniatura-display">
+                                    <div class="miniatura-side">
+                                        <i class="fas fa-images"></i>
+                                    </div>
+                                    <div class="miniatura-side">
+                                        <i class="fas fa-images"></i>
+                                    </div>
+                                </div>
                                 {% if tela.temRodape %}
-                                    <span class="badge bg-success">Com rodapé</span>
-                                {% else %}
-                                    <span class="badge bg-secondary">Sem rodapé</span>
+                                <div class="miniatura-footer">
+                                    Rodapé
+                                </div>
                                 {% endif %}
-                            </p>
-                            {% if tela.footer_text %}
-                            <p class="card-text">
-                                <small class="text-muted">
-                                    <i class="fas fa-quote-left me-1"></i>
-                                    {{ tela.footer_text[:50] }}{% if tela.footer_text|length > 50 %}...{% endif %}
-                                </small>
-                            </p>
-                            {% endif %}
-                        </div>
-                        <div class="card-footer bg-transparent">
-                            <div class="d-flex gap-2">
-                                <a href="/tela/{{ tela.id }}" class="btn btn-success btn-sm flex-fill">
-                                    <i class="fas fa-play me-1"></i>Visualizar
-                                </a>
-                                <a href="/editartela/{{ tela.id }}" class="btn btn-primary btn-sm flex-fill">
-                                    <i class="fas fa-edit me-1"></i>Editar
-                                </a>
                             </div>
+                        </div>
+
+                    </div>
+                    <div class="card-footer bg-transparent">
+                        <div class="d-flex gap-2">
+                            <a href="/tela/{{ tela.id }}" class="btn btn-success btn-sm flex-fill">
+                                <i class="fas fa-play me-1"></i>Visualizar
+                            </a>
+                            <a href="/editartela/{{ tela.id }}" class="btn btn-primary btn-sm flex-fill">
+                                <i class="fas fa-edit me-1"></i>Editar
+                            </a>
                         </div>
                     </div>
                 </div>
-                {% endfor %}
             </div>
-        {% else %}
-            <div class="text-center py-5">
-                <i class="fas fa-tv fa-4x text-muted mb-3"></i>
-                <h3 class="text-muted">Nenhuma tela cadastrada</h3>
-                <p class="text-muted">Crie sua primeira tela de exibição</p>
-            </div>
-        {% endif %}
-    </div>
+            {% endfor %}
+        </div>
 
+        <div id="noResultsMessage" class="text-center py-5" style="display: none;">
+            <i class="fas fa-search fa-4x text-muted mb-3"></i>
+            <h3 class="text-muted">Nenhuma tela encontrada</h3>
+            <p class="text-muted">Tente ajustar o filtro de busca</p>
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-tv fa-4x text-muted mb-3"></i>
+            <h3 class="text-muted">Nenhuma tela cadastrada</h3>
+            <p class="text-muted">Crie sua primeira tela de exibição</p>
+        </div>
+    {% endif %}
+    {% endblock %}
+
+    {% block extra_js %}
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('searchInput');
+        const telasContainer = document.getElementById('telasContainer');
+        const telaItems = document.querySelectorAll('.tela-item');
+        const noResultsMessage = document.getElementById('noResultsMessage');
+
+        if (searchInput && telaItems.length > 0) {
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase().trim();
+                let visibleCount = 0;
+
+                telaItems.forEach(function(item) {
+                    const teleName = item.dataset.name;
+
+                    if (teleName.includes(searchTerm)) {
+                        item.style.display = 'block';
+                        visibleCount++;
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+
+                // Mostrar/ocultar mensagem de "nenhum resultado"
+                if (noResultsMessage) {
+                    if (visibleCount === 0 && searchTerm !== '') {
+                        noResultsMessage.style.display = 'block';
+                        if (telasContainer) {
+                            telasContainer.style.display = 'none';
+                        }
+                    } else {
+                        noResultsMessage.style.display = 'none';
+                        if (telasContainer) {
+                            telasContainer.style.display = 'block';
+                        }
+                    }
+                }
+            });
+        }
+    });
+    </script>
+    {% endblock %}
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

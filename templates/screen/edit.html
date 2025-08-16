@@ -7,47 +7,6 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        .sidebar {
-            min-height: 100vh;
-            background: #343a40;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 250px;
-            z-index: 1000;
-        }
-
-        .sidebar .nav-link {
-            color: #adb5bd;
-            padding: 1rem 1.5rem;
-            border-bottom: 1px solid #495057;
-        }
-
-        .sidebar .nav-link:hover {
-            color: #fff;
-            background: #495057;
-        }
-
-        .sidebar .nav-link.active {
-            color: #fff;
-            background: #007bff;
-        }
-
-        .main-content {
-            margin-left: 250px;
-            padding: 2rem;
-        }
-
-        .brand {
-            color: #fff !important;
-            font-size: 1.5rem;
-            font-weight: bold;
-            text-align: center;
-            padding: 2rem 0;
-            border-bottom: 1px solid #495057;
-            text-decoration: none;
-        }
-
         .media-column {
             min-height: 500px;
             border: 2px solid #dee2e6;
@@ -90,194 +49,186 @@
     </style>
 </head>
 <body>
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <a href="#" class="brand d-block">
-            <i class="fas fa-tv me-2"></i>NOTIF
-        </a>
-        <nav class="nav flex-column">
-            <a href="/vertelas" class="nav-link">
-                <i class="fas fa-list me-2"></i>Listar Telas
-            </a>
-        </nav>
-    </div>
+{% extends "base.html" %}
 
-    <!-- Main Content -->
-    <div class="main-content">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1 class="h3">
-                <i class="fas fa-edit me-2"></i>Editar Tela: {{ screen.name }}
-            </h1>
-            <a href="/vertelas" class="btn btn-secondary">
-                <i class="fas fa-arrow-left me-1"></i>Voltar
-            </a>
-        </div>
+{% block title %}Editar Tela - {{ screen.name }} - NOTIF{% endblock %}
 
-        <form method="POST" id="editForm">
-            <!-- Campos básicos -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0"><i class="fas fa-cog me-2"></i>Configurações Básicas</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="name" class="form-label">Nome da Tela:</label>
-                                <input type="text" class="form-control" id="name" name="name" value="{{ screen.name }}" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <div class="form-check">
-                                    <input type="checkbox" class="form-check-input" id="temRodape" name="temRodape"{% if screen.temRodape %} checked{% endif %}>
-                                    <label class="form-check-label" for="temRodape">
-                                        <i class="fas fa-align-center me-1"></i>Exibir Rodapé
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+{% block extra_css %}
 
-                    <div class="mb-3">
-                        <label for="footer_text" class="form-label">Texto do Rodapé:</label>
-                        <textarea class="form-control" id="footer_text" name="footer_text" rows="3" placeholder="Digite o texto que aparecerá no rodapé">{{ screen.footer_text or '' }}</textarea>
-                    </div>
-                </div>
-            </div>
+{% endblock %}
 
-            <!-- Abas para lados -->
-            <div class="card">
-                <div class="card-header">
-                    <ul class="nav nav-tabs card-header-tabs" id="sidesTabs" role="tablist">
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="left-tab-btn" data-bs-toggle="tab" data-bs-target="#left-tab" type="button" role="tab">
-                                <i class="fas fa-arrow-left me-1"></i>Lado Esquerdo
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="right-tab-btn" data-bs-toggle="tab" data-bs-target="#right-tab" type="button" role="tab">
-                                <i class="fas fa-arrow-right me-1"></i>Lado Direito
-                            </button>
-                        </li>
-                    </ul>
-                </div>
-
-                <div class="card-body">
-                    <div class="tab-content" id="sidesTabsContent">
-                        <!-- Aba Lado Esquerdo -->
-                        <div class="tab-pane fade show active" id="left-tab" role="tabpanel">
-                            <div class="mb-3">
-                                <div class="form-check">
-                                    <input type="checkbox" class="form-check-input" id="left_instagram" name="left_instagram">
-                                    <label class="form-check-label" for="left_instagram">
-                                        <i class="fab fa-instagram me-1"></i>Integração Instagram
-                                    </label>
-                                </div>
-                            </div>
-
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="media-column column-left" id="left-drop-zone" ondrop="drop(event, 'left')" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
-                                        <h6 class="mb-3"><i class="fas fa-images me-2"></i>Mídias do Lado Esquerdo</h6>
-                                        <input type="text" class="form-control mb-3" placeholder="Filtrar por nome..." onkeyup="filterMedia('left', 'side', this.value)">
-                                        <div id="left-side-media" class="media-list">
-                                            <div id="leftEmptyMessage" class="empty-message">
-                                                <i class="fas fa-plus-circle fa-2x mb-2"></i>
-                                                <div>Nenhuma mídia selecionada</div>
-                                                <small>Arraste mídias do banco ou clique no botão +</small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <div class="media-column" id="left-bank-zone">
-                                        <h6 class="mb-3"><i class="fas fa-database me-2"></i>Banco de Mídias</h6>
-                                        <input type="text" class="form-control mb-3" placeholder="Filtrar por nome..." onkeyup="filterMedia('left', 'bank', this.value)">
-                                        <div id="left-bank-media" class="media-list" ondrop="drop(event, 'left-bank')" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
-                                            <!-- Mídias do banco serão carregadas aqui -->
-                                        </div>
-
-                                        <div class="mt-3 p-3 border border-dashed rounded">
-                                            <input type="file" class="form-control mb-2" accept="image/*,video/*" onchange="uploadFile(this)">
-                                            <div class="text-center text-muted">
-                                                <i class="fas fa-cloud-upload-alt me-1"></i>
-                                                Enviar arquivos
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Aba Lado Direito -->
-                        <div class="tab-pane fade" id="right-tab" role="tabpanel">
-                            <div class="mb-3">
-                                <div class="form-check">
-                                    <input type="checkbox" class="form-check-input" id="right_instagram" name="right_instagram">
-                                    <label class="form-check-label" for="right_instagram">
-                                        <i class="fab fa-instagram me-1"></i>Integração Instagram
-                                    </label>
-                                </div>
-                            </div>
-
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="media-column column-left" id="right-drop-zone" ondrop="drop(event, 'right')" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
-                                        <h6 class="mb-3"><i class="fas fa-images me-2"></i>Mídias do Lado Direito</h6>
-                                        <input type="text" class="form-control mb-3" placeholder="Filtrar por nome..." onkeyup="filterMedia('right', 'side', this.value)">
-                                        <div id="right-side-media" class="media-list">
-                                            <div id="rightEmptyMessage" class="empty-message">
-                                                <i class="fas fa-plus-circle fa-2x mb-2"></i>
-                                                <div>Nenhuma mídia selecionada</div>
-                                                <small>Arraste mídias do banco ou clique no botão +</small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <div class="media-column" id="right-bank-zone">
-                                        <h6 class="mb-3"><i class="fas fa-database me-2"></i>Banco de Mídias</h6>
-                                        <input type="text" class="form-control mb-3" placeholder="Filtrar por nome..." onkeyup="filterMedia('right', 'bank', this.value)">
-                                        <div id="right-bank-media" class="media-list" ondrop="drop(event, 'right-bank')" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
-                                            <!-- Mídias do banco serão carregadas aqui -->
-                                        </div>
-
-                                        <div class="mt-3 p-3 border border-dashed rounded">
-                                            <input type="file" class="form-control mb-2" accept="image/*,video/*" onchange="uploadFile(this)">
-                                            <div class="text-center text-muted">
-                                                <i class="fas fa-cloud-upload-alt me-1"></i>
-                                                Enviar arquivos
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Campos ocultos para envio -->
-            <div id="hidden-fields"></div>
-
-            <div class="text-center mt-4">
-                <button type="submit" class="btn btn-primary btn-lg me-3">
-                    <i class="fas fa-save me-1"></i>Salvar Alterações
-                </button>
-                <a href="/vertelas" class="btn btn-secondary btn-lg">
-                    <i class="fas fa-times me-1"></i>Cancelar
-                </a>
-            </div>
-        </form>
-    </div>
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3">
+        <i class="fas fa-edit me-2"></i>Editar Tela: {{ screen.name }}
+    </h1>
+    <a href="/vertelas" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-1"></i>Voltar
+    </a>
 </div>
 
-</form>
+<form method="POST" id="editForm">
+    <!-- Campos básicos -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-cog me-2"></i>Configurações Básicas</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Nome da Tela:</label>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ screen.name }}" required>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="temRodape" name="temRodape"{% if screen.temRodape %} checked{% endif %}>
+                            <label class="form-check-label" for="temRodape">
+                                <i class="fas fa-align-center me-1"></i>Exibir Rodapé
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+            <div class="mb-3">
+                <label for="footer_text" class="form-label">Texto do Rodapé:</label>
+                <textarea class="form-control" id="footer_text" name="footer_text" rows="3" placeholder="Digite o texto que aparecerá no rodapé">{{ screen.footer_text or '' }}</textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- Abas para lados -->
+    <div class="card">
+        <div class="card-header">
+            <ul class="nav nav-tabs card-header-tabs" id="sidesTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="left-tab-btn" data-bs-toggle="tab" data-bs-target="#left-tab" type="button" role="tab">
+                        <i class="fas fa-arrow-left me-1"></i>Lado Esquerdo
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="right-tab-btn" data-bs-toggle="tab" data-bs-target="#right-tab" type="button" role="tab">
+                        <i class="fas fa-arrow-right me-1"></i>Lado Direito
+                    </button>
+                </li>
+            </ul>
+        </div>
+
+        <div class="card-body">
+            <div class="tab-content" id="sidesTabsContent">
+                <!-- Aba Lado Esquerdo -->
+                <div class="tab-pane fade show active" id="left-tab" role="tabpanel">
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="left_instagram" name="left_instagram">
+                            <label class="form-check-label" for="left_instagram">
+                                <i class="fab fa-instagram me-1"></i>Integração Instagram
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="media-column column-left" id="left-drop-zone" ondrop="drop(event, 'left')" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
+                                <h6 class="mb-3"><i class="fas fa-images me-2"></i>Mídias do Lado Esquerdo</h6>
+                                <input type="text" class="form-control mb-3" placeholder="Filtrar por nome..." onkeyup="filterMedia('left', 'side', this.value)">
+                                <div id="left-side-media" class="media-list">
+                                    <div id="leftEmptyMessage" class="empty-message">
+                                        <i class="fas fa-plus-circle fa-2x mb-2"></i>
+                                        <div>Nenhuma mídia selecionada</div>
+                                        <small>Arraste mídias do banco ou clique no botão +</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="media-column" id="left-bank-zone">
+                                <h6 class="mb-3"><i class="fas fa-database me-2"></i>Banco de Mídias</h6>
+                                <input type="text" class="form-control mb-3" placeholder="Filtrar por nome..." onkeyup="filterMedia('left', 'bank', this.value)">
+                                <div id="left-bank-media" class="media-list" ondrop="drop(event, 'left-bank')" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
+                                    <!-- Mídias do banco serão carregadas aqui -->
+                                </div>
+
+                                <div class="mt-3 p-3 border border-dashed rounded">
+                                    <input type="file" class="form-control mb-2" accept="image/*,video/*" onchange="uploadFile(this)">
+                                    <div class="text-center text-muted">
+                                        <i class="fas fa-cloud-upload-alt me-1"></i>
+                                        Enviar arquivos
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Aba Lado Direito -->
+                <div class="tab-pane fade" id="right-tab" role="tabpanel">
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="right_instagram" name="right_instagram">
+                            <label class="form-check-label" for="right_instagram">
+                                <i class="fab fa-instagram me-1"></i>Integração Instagram
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="media-column column-left" id="right-drop-zone" ondrop="drop(event, 'right')" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
+                                <h6 class="mb-3"><i class="fas fa-images me-2"></i>Mídias do Lado Direito</h6>
+                                <input type="text" class="form-control mb-3" placeholder="Filtrar por nome..." onkeyup="filterMedia('right', 'side', this.value)">
+                                <div id="right-side-media" class="media-list">
+                                    <div id="rightEmptyMessage" class="empty-message">
+                                        <i class="fas fa-plus-circle fa-2x mb-2"></i>
+                                        <div>Nenhuma mídia selecionada</div>
+                                        <small>Arraste mídias do banco ou clique no botão +</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="media-column" id="right-bank-zone">
+                                <h6 class="mb-3"><i class="fas fa-database me-2"></i>Banco de Mídias</h6>
+                                <input type="text" class="form-control mb-3" placeholder="Filtrar por nome..." onkeyup="filterMedia('right', 'bank', this.value)">
+                                <div id="right-bank-media" class="media-list" ondrop="drop(event, 'right-bank')" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
+                                    <!-- Mídias do banco serão carregadas aqui -->
+                                </div>
+
+                                <div class="mt-3 p-3 border border-dashed rounded">
+                                    <input type="file" class="form-control mb-2" accept="image/*,video/*" onchange="uploadFile(this)">
+                                    <div class="text-center text-muted">
+                                        <i class="fas fa-cloud-upload-alt me-1"></i>
+                                        Enviar arquivos
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Campos ocultos para envio -->
+    <div id="hidden-fields"></div>
+
+    <div class="text-center mt-4">
+        <button type="submit" class="btn btn-primary btn-lg me-3">
+            <i class="fas fa-save me-1"></i>Salvar Alterações
+        </button>
+        <a href="/vertelas" class="btn btn-secondary btn-lg">
+            <i class="fas fa-times me-1"></i>Cancelar
+        </a>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
 <script>
 // Dados do servidor
 const availableFiles = {{ available_files|tojson|safe }};
@@ -643,5 +594,6 @@ document.addEventListener('DOMContentLoaded', function() {
     updateHiddenFields();
 });
 </script>
+{% endblock %}
 </body>
 </html>
