@@ -27,7 +27,7 @@
 
         .display-area {
             {% if screen.temRodape %}
-            height: 80%;
+            height: 85%;
             {% else %}
             height: 100%;
             {% endif %}
@@ -49,14 +49,14 @@
         }
 
         .media-content {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
         .footer {
             {% if screen.temRodape %}
-            height: 20%;
+            height: 15%;
             display: flex;
             {% else %}
             display: none;
@@ -114,7 +114,13 @@
         let rightIndex = 0;
         let leftTimer, rightTimer;
 
-        function displayMedia(files, container, index) {
+        // Controle de áudio para vídeos simultâneos
+        let leftVideoElement = null;
+        let rightVideoElement = null;
+        let audioQueue = [];
+        let currentPlayingAudio = null;
+
+        function displayMedia(files, container, index, side) {
             if (!files || files.length === 0) return;
 
             const file = files[index];
@@ -124,18 +130,45 @@
             if (file.is_video) {
                 mediaElement = document.createElement('video');
                 mediaElement.src = mediaPath;
-                mediaElement.muted = !file.has_audio;
                 mediaElement.autoplay = true;
                 mediaElement.className = 'media-content';
 
+                // Configurar áudio
+                if (file.has_audio) {
+                    mediaElement.muted = false;
+                    handleVideoAudio(mediaElement, side);
+                } else {
+                    mediaElement.muted = true;
+                }
+
+                // Armazenar referência do vídeo
+                if (side === 'left') {
+                    leftVideoElement = mediaElement;
+                } else {
+                    rightVideoElement = mediaElement;
+                }
+
                 // Quando o vídeo terminar, avançar para próxima mídia
                 mediaElement.addEventListener('ended', () => {
-                    if (container.id === 'left-display') {
+                    if (side === 'left') {
                         nextLeftMedia();
                     } else {
                         nextRightMedia();
                     }
+
+                    // Remover da fila de áudio se estava tocando
+                    if (currentPlayingAudio === mediaElement) {
+                        playNextInAudioQueue();
+                    }
                 });
+
+                // Quando o vídeo começar a tocar
+                mediaElement.addEventListener('playing', () => {
+                    if (file.has_audio) {
+                        currentPlayingAudio = mediaElement;
+                    }
+                });
+
             } else {
                 mediaElement = document.createElement('img');
                 mediaElement.src = mediaPath;
@@ -147,12 +180,36 @@
             container.appendChild(mediaElement);
         }
 
+        function handleVideoAudio(videoElement, side) {
+            // Se já há um vídeo tocando com áudio, pausar o novo e adicionar à fila
+            if (currentPlayingAudio && currentPlayingAudio !== videoElement) {
+                videoElement.pause();
+                audioQueue.push({element: videoElement, side: side});
+                return;
+            }
+
+            // Se não há nada tocando, este vídeo pode tocar
+            if (!currentPlayingAudio) {
+                currentPlayingAudio = videoElement;
+            }
+        }
+
+        function playNextInAudioQueue() {
+            currentPlayingAudio = null;
+
+            if (audioQueue.length > 0) {
+                const nextVideo = audioQueue.shift();
+                currentPlayingAudio = nextVideo.element;
+                nextVideo.element.play();
+            }
+        }
+
         function nextLeftMedia() {
             if (leftFiles.length === 0) return;
 
             clearTimeout(leftTimer);
             leftIndex = (leftIndex + 1) % leftFiles.length;
-            displayMedia(leftFiles, document.getElementById('left-display'), leftIndex);
+            displayMedia(leftFiles, document.getElementById('left-display'), leftIndex, 'left');
 
             // Se não for vídeo, definir timer de 15 segundos
             const currentFile = leftFiles[leftIndex];
@@ -166,7 +223,7 @@
 
             clearTimeout(rightTimer);
             rightIndex = (rightIndex + 1) % rightFiles.length;
-            displayMedia(rightFiles, document.getElementById('right-display'), rightIndex);
+            displayMedia(rightFiles, document.getElementById('right-display'), rightIndex, 'right');
 
             // Se não for vídeo, definir timer de 15 segundos
             const currentFile = rightFiles[rightIndex];
@@ -177,14 +234,25 @@
 
         // Inicializar displays
         if (leftFiles.length > 0) {
-            displayMedia(leftFiles, document.getElementById('left-display'), 0);
+            displayMedia(leftFiles, document.getElementById('left-display'), 0, 'left');
             if (!leftFiles[0].is_video) {
                 leftTimer = setTimeout(nextLeftMedia, 15000);
             }
         }
 
         if (rightFiles.length > 0) {
-            displayMedia(rightFiles, document.getElementById('right-display'), 0);
+            // Se o primeiro arquivo da esquerda é um vídeo com áudio, atrasar o da direita
+            const leftHasAudio = leftFiles.length > 0 && leftFiles[0].is_video && leftFiles[0].has_audio;
+
+            if (leftHasAudio && rightFiles[0].is_video && rightFiles[0].has_audio) {
+                // Aguardar um pouco para o vídeo da esquerda iniciar primeiro
+                setTimeout(() => {
+                    displayMedia(rightFiles, document.getElementById('right-display'), 0, 'right');
+                }, 100);
+            } else {
+                displayMedia(rightFiles, document.getElementById('right-display'), 0, 'right');
+            }
+
             if (!rightFiles[0].is_video) {
                 rightTimer = setTimeout(nextRightMedia, 15000);
             }
@@ -192,4 +260,3 @@
     </script>
 </body>
 </html>
-
