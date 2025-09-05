@@ -1,10 +1,11 @@
-from flask import Blueprint, render_template, request, redirect, url_for, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, jsonify, send_file
 from models.screens import Screens
 from models.screenFiles import ScreenFiles, SideEnum, MediaTypeEnum
 from models.files import Files
 from db_init import SessionLocal
 from services.instagramService import InstagramService
 from services.fileUploadService import FileUploadService
+import os
 
 from services.screenFilesService import buscar_files_por_screen
 import services.screenService as ScreenService
@@ -205,3 +206,179 @@ def upload_file():
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+# Rotas para gerenciamento do banco de mídias
+
+@screens_bp.route('/banco-midias')
+def banco_midias():
+    """Tela de gerenciamento do banco de mídias"""
+    session = SessionLocal()
+
+    try:
+        files = session.query(Files).all()
+
+        # Converter para dicionários com informações do tipo de mídia
+        medias = []
+        for file in files:
+            media_dict = {
+                'id': file.id,
+                'name': file.file_name,
+                'original_name': file.original_name,
+                'type': 'video' if file.is_video else 'image',
+                'path': file.file_path
+            }
+            medias.append(media_dict)
+
+        return render_template('screen/media_bank.html', medias=medias)
+
+    finally:
+        session.close()
+
+
+@screens_bp.route('/upload-midias', methods=['POST'])
+def upload_midias():
+    """Upload múltiplo de mídias"""
+    session = SessionLocal()
+
+    try:
+        files = request.files.getlist('files')
+
+        if not files or files[0].filename == '':
+            return jsonify({'success': False, 'message': 'Nenhum arquivo enviado'})
+
+        uploaded_count = 0
+        errors = []
+
+        for file in files:
+            if file and file.filename:
+                try:
+                    result = FileUploadService.save_file(file)
+                    if result['success']:
+                        uploaded_count += 1
+                    else:
+                        errors.append(f"Erro ao enviar {file.filename}: {result.get('message', 'Erro desconhecido')}")
+                except Exception as e:
+                    errors.append(f"Erro ao processar {file.filename}: {str(e)}")
+
+        if uploaded_count > 0:
+            return jsonify({
+                'success': True,
+                'uploaded': uploaded_count,
+                'errors': errors
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Nenhum arquivo foi enviado com sucesso',
+                'errors': errors
+            })
+
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})
+    finally:
+        session.close()
+
+
+@screens_bp.route('/delete-media/<int:media_id>', methods=['DELETE'])
+def delete_media(media_id):
+    """Excluir uma mídia do banco"""
+    session = SessionLocal()
+
+    try:
+        # Buscar o arquivo
+        file = session.query(Files).get(media_id)
+
+        if not file:
+            return jsonify({'success': False, 'message': 'Mídia não encontrada'})
+
+        # Verificar se a mídia está sendo usada em alguma tela
+        screen_files = session.query(ScreenFiles).filter(ScreenFiles.file_id == media_id).all()
+
+        if screen_files:
+            screen_names = []
+            for sf in screen_files:
+                if sf.screen and sf.screen.name not in screen_names:
+                    screen_names.append(sf.screen.name)
+
+            return jsonify({
+                'success': False,
+                'message': f'Esta mídia está sendo usada nas telas: {", ".join(screen_names)}'
+            })
+
+        # Tentar remover o arquivo físico
+        file_path = os.path.join('static', 'files', file.file_name)
+        if os.path.exists(file_path):
+            try:
+                os.remove(file_path)
+            except Exception as e:
+                print(f"Erro ao remover arquivo físico: {e}")
+
+        # Remover do banco de dados
+        session.delete(file)
+        session.commit()
+
+        return jsonify({'success': True, 'message': 'Mídia excluída com sucesso'})
+
+    except Exception as e:
+        session.rollback()
+        return jsonify({'success': False, 'message': str(e)})
+    finally:
+        session.close()
+
+
+@screens_bp.route('/download-media/<int:media_id>')
+def download_media(media_id):
+    """Download de uma mídia"""
+    session = SessionLocal()
+
+    try:
+        file = session.query(Files).get(media_id)
+
+        if not file:
+            return jsonify({'error': 'Mídia não encontrada'}), 404
+
+        file_path = os.path.join('static', 'files', file.file_name)
+
+        if not os.path.exists(file_path):
+            return jsonify({'error': 'Arquivo não encontrado no sistema'}), 404
+
+        return send_file(
+            file_path,
+            as_attachment=True,
+            download_name=file.original_name or file.file_name
+        )
+
+    finally:
+        session.close()
+
+
+@screens_bp.route('/update-media-name/<int:media_id>', methods=['POST'])
+def update_media_name(media_id):
+    """Atualizar o nome de uma mídia"""
+    session = SessionLocal()
+
+    try:
+        data = request.get_json()
+        new_name = data.get('newName')
+
+        if not new_name or not new_name.strip():
+            return jsonify({'success': False, 'message': 'Nome não pode estar vazio'})
+
+        # Buscar o arquivo
+        file = session.query(Files).get(media_id)
+
+        if not file:
+            return jsonify({'success': False, 'message': 'Mídia não encontrada'})
+
+        # Atualizar o nome original
+        file.original_name = new_name.strip()
+        session.commit()
+
+        return jsonify({'success': True, 'message': 'Nome atualizado com sucesso'})
+
+    except Exception as e:
+        session.rollback()
+        return jsonify({'success': False, 'message': str(e)})
+    finally:
+        session.close()

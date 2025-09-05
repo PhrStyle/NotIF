@@ -1,0 +1,545 @@
+{% extends "base.html" %}
+
+{% block title %}Banco de Mídias - NOTIF{% endblock %}
+
+{% block extra_css %}
+    .media-item {
+        border: 2px solid #dee2e6;
+        border-radius: 0.375rem;
+        overflow: hidden;
+        transition: all 0.3s;
+        cursor: pointer;
+        background: white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .media-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        border-color: #007bff;
+    }
+
+    .media-preview {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        background: #f8f9fa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .media-info {
+        padding: 1rem;
+        background: white;
+        border-top: 1px solid #dee2e6;
+    }
+
+    .media-name {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #495057;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 100%;
+    }
+
+    .media-name-input {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #495057;
+        border: 1px solid transparent;
+        background: transparent;
+        padding: 2px 4px;
+        border-radius: 3px;
+        width: 100%;
+        font-size: inherit;
+    }
+
+    .media-name-input:focus {
+        border-color: #007bff;
+        background: white;
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+    }
+
+    .media-type {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-bottom: 0.5rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .media-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .btn-action {
+        flex: 1;
+        font-size: 0.875rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .upload-area {
+        border: 2px dashed #dee2e6;
+        border-radius: 0.375rem;
+        padding: 2rem;
+        text-align: center;
+        background: #f8f9fa;
+        transition: all 0.3s;
+        cursor: pointer;
+    }
+
+    .upload-area:hover {
+        border-color: #007bff;
+        background: #e3f2fd;
+    }
+
+    .upload-area.dragover {
+        border-color: #007bff;
+        background: #e3f2fd;
+    }
+
+    .modal-media {
+        max-width: 90%;
+        max-height: 80vh;
+        object-fit: contain;
+    }
+
+    .media-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1.5rem;
+        margin-top: 2rem;
+    }
+
+    .filter-section {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    /* Modal de confirmação personalizado */
+    .confirm-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+    }
+
+    .confirm-dialog {
+        background: white;
+        border-radius: 0.5rem;
+        padding: 2rem;
+        max-width: 400px;
+        margin: 1rem;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .confirm-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 1rem;
+    }
+
+    .confirm-message {
+        color: #6c757d;
+        margin-bottom: 1.5rem;
+        line-height: 1.5;
+    }
+
+    .confirm-buttons {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: flex-end;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-photo-video me-2"></i>Banco de Mídias</h2>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadModal">
+        <i class="fas fa-plus me-2"></i>Adicionar Mídias
+    </button>
+</div>
+
+<!-- Filtros -->
+<div class="filter-section">
+    <div class="row">
+        <div class="col-md-6">
+            <label for="searchFilter" class="form-label">Filtrar por nome:</label>
+            <input type="text" id="searchFilter" class="form-control" placeholder="Digite o nome da mídia...">
+        </div>
+        <div class="col-md-6">
+            <label for="typeFilter" class="form-label">Filtrar por tipo:</label>
+            <select id="typeFilter" class="form-select">
+                <option value="">Todos os tipos</option>
+                <option value="image">Imagens</option>
+                <option value="video">Vídeos</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- Grid de Mídias -->
+<div class="media-grid" id="mediaGrid">
+    {% for media in medias %}
+    <div class="media-item" data-name="{{ media.name.lower() }}" data-type="{{ media.type }}">
+        <div class="media-preview" onclick="previewMedia('{{ media.id }}', '{{ media.name }}', '{{ media.type }}')">
+            {% if media.type == 'image' %}
+                <img src="{{ url_for('static', filename='files/' + media.name) }}" alt="{{ media.name }}" class="w-100 h-100" style="object-fit: cover;">
+            {% else %}
+                <video class="w-100 h-100" style="object-fit: cover;" muted>
+                    <source src="{{ url_for('static', filename='files/' + media.name) }}" type="video/mp4">
+                </video>
+            {% endif %}
+        </div>
+        <div class="media-info">
+            <input type="text" class="media-name-input" value="{{ media.original_name or media.name }}"
+                   onblur="updateMediaName({{ media.id }}, this.value, '{{ media.name }}')"
+                   onkeypress="handleNameKeypress(event, {{ media.id }}, '{{ media.name }}')"
+                   onclick="event.stopPropagation()">
+            <div class="media-type">
+                <i class="fas fa-{{ 'image' if media.type == 'image' else 'video' }} me-1"></i>
+                {{ 'Imagem' if media.type == 'image' else 'Vídeo' }}
+            </div>
+            <div class="media-actions">
+                <button class="btn btn-outline-primary btn-action" onclick="downloadMedia('{{ media.id }}', '{{ media.name }}')">
+                    <i class="fas fa-download me-1"></i>Baixar
+                </button>
+                <button class="btn btn-outline-danger btn-action" onclick="showDeleteConfirm('{{ media.id }}', '{{ media.original_name or media.name }}')">
+                    <i class="fas fa-trash me-1"></i>Excluir
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% if not medias %}
+<div class="text-center py-5">
+    <i class="fas fa-photo-video fa-5x text-muted mb-3"></i>
+    <h4 class="text-muted">Nenhuma mídia encontrada</h4>
+    <p class="text-muted">Adicione algumas mídias para começar</p>
+</div>
+{% endif %}
+
+<!-- Modal de Upload -->
+<div class="modal fade" id="uploadModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Adicionar Mídias</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="upload-area" id="uploadArea">
+                    <div class="mb-3">
+                        <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                        <h5>Arraste arquivos aqui ou clique para selecionar</h5>
+                        <p class="text-muted">Suporta imagens (JPG, PNG) e vídeos (MP4)</p>
+                    </div>
+                    <input type="file" id="fileInput" multiple accept="image/*,video/mp4" style="display: none;">
+                </div>
+                <div id="uploadProgress" class="mt-3" style="display: none;">
+                    <div class="progress">
+                        <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                    </div>
+                    <small class="text-muted mt-2 d-block">Enviando arquivos...</small>
+                </div>
+                <div id="uploadResults" class="mt-3"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                <button type="button" class="btn btn-primary" id="uploadBtn" onclick="uploadFiles()">
+                    <i class="fas fa-upload me-2"></i>Enviar Arquivos
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Preview -->
+<div class="modal fade" id="previewModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="previewTitle">Preview</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div id="previewContent"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmação de Exclusão -->
+<div class="confirm-modal" id="confirmModal">
+    <div class="confirm-dialog">
+        <div class="confirm-title">Confirmar Exclusão</div>
+        <div class="confirm-message">Tem certeza que deseja excluir esta mídia?</div>
+        <div class="confirm-buttons">
+            <button class="btn btn-secondary" onclick="closeConfirmModal()">Cancelar</button>
+            <button class="btn btn-danger" id="confirmDeleteBtn">Excluir</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let selectedFiles = [];
+let mediaToDelete = null;
+
+// Configurar área de upload
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('fileInput');
+    const searchFilter = document.getElementById('searchFilter');
+    const typeFilter = document.getElementById('typeFilter');
+
+    // Click para selecionar arquivos
+    uploadArea.addEventListener('click', () => {
+        fileInput.click();
+    });
+
+    // Arrastar e soltar
+    uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+    });
+
+    uploadArea.addEventListener('dragleave', () => {
+        uploadArea.classList.remove('dragover');
+    });
+
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        const files = Array.from(e.dataTransfer.files);
+        handleFiles(files);
+    });
+
+    // Seleção de arquivos
+    fileInput.addEventListener('change', (e) => {
+        const files = Array.from(e.target.files);
+        handleFiles(files);
+    });
+
+    // Filtros
+    searchFilter.addEventListener('input', filterMedia);
+    typeFilter.addEventListener('change', filterMedia);
+});
+
+function handleFiles(files) {
+    selectedFiles = files.filter(file => {
+        return file.type.startsWith('image/') || file.type.startsWith('video/');
+    });
+
+    if (selectedFiles.length > 0) {
+        document.getElementById('uploadResults').innerHTML = `
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                ${selectedFiles.length} arquivo(s) selecionado(s)
+            </div>
+        `;
+        document.getElementById('uploadBtn').disabled = false;
+    } else {
+        document.getElementById('uploadResults').innerHTML = `
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Nenhum arquivo válido selecionado
+            </div>
+        `;
+        document.getElementById('uploadBtn').disabled = true;
+    }
+}
+
+function uploadFiles() {
+    if (selectedFiles.length === 0) return;
+
+    const formData = new FormData();
+    selectedFiles.forEach(file => {
+        formData.append('files', file);
+    });
+
+    const progressBar = document.querySelector('.progress-bar');
+    const uploadProgress = document.getElementById('uploadProgress');
+    const uploadResults = document.getElementById('uploadResults');
+
+    uploadProgress.style.display = 'block';
+    document.getElementById('uploadBtn').disabled = true;
+
+    fetch('/upload-midias', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        uploadProgress.style.display = 'none';
+
+        if (data.success) {
+            uploadResults.innerHTML = `
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle me-2"></i>
+                    ${data.uploaded} arquivo(s) enviado(s) com sucesso!
+                </div>
+            `;
+
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        } else {
+            uploadResults.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    ${data.message || 'Erro ao enviar arquivos'}
+                </div>
+            `;
+        }
+    })
+    .catch(error => {
+        uploadProgress.style.display = 'none';
+        uploadResults.innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                Erro ao enviar arquivos: ${error.message}
+            </div>
+        `;
+    })
+    .finally(() => {
+        document.getElementById('uploadBtn').disabled = false;
+    });
+}
+
+function filterMedia() {
+    const searchTerm = document.getElementById('searchFilter').value.toLowerCase();
+    const typeFilter = document.getElementById('typeFilter').value;
+    const mediaItems = document.querySelectorAll('.media-item');
+
+    mediaItems.forEach(item => {
+        const name = item.dataset.name;
+        const type = item.dataset.type;
+
+        const matchesSearch = name.includes(searchTerm);
+        const matchesType = !typeFilter || type === typeFilter;
+
+        if (matchesSearch && matchesType) {
+            item.style.display = 'block';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
+function previewMedia(id, name, type) {
+    const modal = new bootstrap.Modal(document.getElementById('previewModal'));
+    const title = document.getElementById('previewTitle');
+    const content = document.getElementById('previewContent');
+
+    title.textContent = name;
+
+    if (type === 'image') {
+        content.innerHTML = `<img src="/static/files/${name}" class="modal-media" alt="${name}">`;
+    } else {
+        content.innerHTML = `
+            <video class="modal-media" controls id="previewVideo">
+                <source src="/static/files/${name}" type="video/mp4">
+                Seu navegador não suporta o elemento de vídeo.
+            </video>
+        `;
+    }
+
+    modal.show();
+
+    // Pausar vídeo quando o modal for fechado
+    document.getElementById('previewModal').addEventListener('hidden.bs.modal', function () {
+        const video = document.getElementById('previewVideo');
+        if (video) {
+            video.pause();
+        }
+    });
+}
+
+function downloadMedia(id, name) {
+    const link = document.createElement('a');
+    link.href = `/static/files/${name}`;
+    link.download = name;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+function showDeleteConfirm(id, name) {
+    mediaToDelete = { id, name };
+    document.getElementById('confirmModal').style.display = 'flex';
+}
+
+function closeConfirmModal() {
+    document.getElementById('confirmModal').style.display = 'none';
+}
+
+document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+    if (mediaToDelete) {
+        fetch(`/delete-media/${mediaToDelete.id}`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Erro ao excluir mídia: ' + (data.message || 'Erro desconhecido'));
+            }
+        })
+        .catch(error => {
+            alert('Erro ao excluir mídia: ' + error.message);
+        })
+        .finally(() => {
+            closeConfirmModal();
+        });
+    }
+});
+
+function updateMediaName(id, newName, oldName) {
+    if (newName && newName !== oldName) {
+        fetch(`/update-media-name/${id}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ newName })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (!data.success) {
+                alert('Erro ao atualizar nome da mídia: ' + (data.message || 'Erro desconhecido'));
+            }
+        })
+        .catch(error => {
+            alert('Erro ao atualizar nome da mídia: ' + error.message);
+        });
+    }
+}
+
+</script>
+{% endblock %}
