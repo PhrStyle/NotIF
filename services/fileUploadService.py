@@ -60,7 +60,7 @@ class FileUploadService:
             if existing_file:
                 session.close()
                 return {'success': False, 'error': 'Nome de arquivo duplicado'}
-
+            
             # Caminho completo do arquivo
             file_path = os.path.join(FileUploadService.UPLOAD_FOLDER, unique_filename)
             
@@ -74,10 +74,10 @@ class FileUploadService:
                 is_video=FileUploadService.is_video(original_filename),
                 original_name=original_filename
             )
-
+            
             session.add(new_file)
             session.commit()
-
+            
             # Converter para dicionário para retorno
             file_dict = {
                 'id': new_file.id,
@@ -86,21 +86,21 @@ class FileUploadService:
                 'is_video': new_file.is_video,
                 'original_name': new_file.original_name
             }
-
+            
             session.close()
-
+            
             return {
                 'success': True,
                 'message': 'Arquivo salvo com sucesso',
                 'file': file_dict
             }
-
+            
         except Exception as e:
             if 'session' in locals():
                 session.rollback()
                 session.close()
             return {'success': False, 'error': str(e)}
-
+    
     @staticmethod
     def delete_file(file_id):
         """

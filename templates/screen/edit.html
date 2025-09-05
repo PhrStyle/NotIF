@@ -97,6 +97,16 @@
                 <label for="footer_text" class="form-label">Texto do Rodapé:</label>
                 <textarea class="form-control" id="footer_text" name="footer_text" rows="3" placeholder="Digite o texto que aparecerá no rodapé">{{ screen.footer_text or '' }}</textarea>
             </div>
+
+            <div class="mb-3">
+                <label for="soundtrack" class="form-label">Soundtrack (YouTube ou Rádio):</label>
+                <input type="url" class="form-control" id="soundtrack" name="soundtrack" value="{{ screen.soundtrack or '' }}" placeholder="Ex: https://www.youtube.com/watch?v=... ou http://radiolink.com/stream">
+                <small class="form-text text-muted">
+                    <i class="fab fa-youtube me-1"></i>Para YouTube: Cole o link completo da playlist
+                    <br>
+                    <i class="fas fa-radio me-1"></i>Para Rádio: Cole o link direto do stream
+                </small>
+            </div>
         </div>
     </div>
 

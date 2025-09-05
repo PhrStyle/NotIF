@@ -78,8 +78,19 @@
 </head>
 <body>
     <audio id="radioPlayer" autoplay loop preload="auto">
-      <source src="http://sv13.hdradios.net:6990/;" type="audio/mpeg">
+      {% if screen.soundtrack and 'youtube' not in screen.soundtrack.lower() %}
+        <source src="{{ screen.soundtrack }}" type="audio/mpeg">
+      {% endif %}
     </audio>
+
+    <!-- YouTube Soundtrack (se houver) -->
+    {% if screen.soundtrack and 'youtube' in screen.soundtrack.lower() %}
+        <iframe id="youtubePlayer" hidden width="560" height="315"
+                src="https://www.youtube.com/embed/{{ screen.soundtrack | extract_youtube_id }}?autoplay=1&loop=1&playlist={{ screen.soundtrack | extract_youtube_id }}&mute=0"
+                title="YouTube video player" frameborder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowfullscreen></iframe>
+    {% endif %}
 
     <div class="main-container">
         <div class="display-area">
@@ -114,6 +125,10 @@
         const leftFiles = {{ left_files|tojson|safe }};
         const rightFiles = {{ right_files|tojson|safe }};
 
+        // Configuração da soundtrack
+        const soundtrackUrl = "{{ screen.soundtrack or '' }}";
+        const isYouTubeSoundtrack = soundtrackUrl.toLowerCase().includes('youtube');
+
         let leftIndex = 0;
         let rightIndex = 0;
         let leftTimer, rightTimer;
@@ -124,30 +139,51 @@
         let audioQueue = [];
         let currentPlayingAudio = null;
 
-        // Controle da rádio
+        // Controle da rádio/soundtrack
         const radioPlayer = document.getElementById('radioPlayer');
-        let radioPlaying = false;
+        const youtubePlayer = document.getElementById('youtubePlayer');
+        let soundtrackPlaying = false;
+        let youtubeOriginalSrc = ''; // Armazenar o src original do YouTube
+
+        // Armazenar o src original do YouTube no carregamento da página
+        if (youtubePlayer) {
+            youtubeOriginalSrc = youtubePlayer.src;
+        }
 
         // Verificação periódica dos vídeos
         let videoCheckInterval;
 
-        // Funções para controlar a rádio
-        function startRadio() {
-            if (!radioPlaying) {
-                radioPlayer.play().then(() => {
-                    radioPlaying = true;
-                    console.log('Rádio iniciada');
-                }).catch(e => {
-                    console.log('Erro ao iniciar rádio:', e);
-                });
+        // Funções para controlar a soundtrack (rádio ou YouTube)
+        function startSoundtrack() {
+            if (!soundtrackPlaying) {
+                if (isYouTubeSoundtrack && youtubePlayer) {
+                    // Para YouTube, restaurar o src original para reiniciar
+                    youtubePlayer.src = youtubeOriginalSrc;
+                    soundtrackPlaying = true;
+                    console.log('YouTube soundtrack iniciado');
+                } else if (radioPlayer && radioPlayer.src) {
+                    radioPlayer.play().then(() => {
+                        soundtrackPlaying = true;
+                        console.log('Rádio iniciada');
+                    }).catch(e => {
+                        console.log('Erro ao iniciar rádio:', e);
+                    });
+                }
             }
         }
 
-        function stopRadio() {
-            if (radioPlaying) {
-                radioPlayer.pause();
-                radioPlaying = false;
-                console.log('Rádio pausada');
+        function stopSoundtrack() {
+            if (soundtrackPlaying) {
+                if (isYouTubeSoundtrack && youtubePlayer) {
+                    // Para YouTube, definir src como about:blank para pausar
+                    youtubePlayer.src = 'about:blank';
+                    soundtrackPlaying = false;
+                    console.log('YouTube soundtrack pausado');
+                } else if (radioPlayer) {
+                    radioPlayer.pause();
+                    soundtrackPlaying = false;
+                    console.log('Rádio pausada');
+                }
             }
         }
 
@@ -236,22 +272,22 @@
                 mediaElement.addEventListener('playing', () => {
                     if (file.has_audio) {
                         currentPlayingAudio = mediaElement;
-                        stopRadio();
-                        console.log('Vídeo com áudio iniciou - rádio pausada');
+                        stopSoundtrack();
+                        console.log('Vídeo com áudio iniciou - soundtrack pausada');
                     }
                 });
 
                 // Quando o vídeo terminar
                 mediaElement.addEventListener('ended', () => {
-                    // Se tinha áudio, limpar referência e verificar se deve reiniciar rádio
+                    // Se tinha áudio, limpar referência e verificar se deve reiniciar soundtrack
                     if (file.has_audio && currentPlayingAudio === mediaElement) {
                         currentPlayingAudio = null;
-                        console.log('Vídeo com áudio terminou - verificando rádio');
+                        console.log('Vídeo com áudio terminou - verificando soundtrack');
 
-                        // Aguardar um pouco e verificar se deve reiniciar rádio
+                        // Aguardar um pouco e verificar se deve reiniciar soundtrack
                         setTimeout(() => {
                             if (!currentPlayingAudio) {
-                                startRadio();
+                                startSoundtrack();
                             }
                         }, 1000);
                     }
@@ -329,10 +365,15 @@
             }
         }
 
-        // Inicializar rádio após um tempo
+        // Inicializar soundtrack após um tempo
         setTimeout(() => {
-            radioPlaying = true; // Marcar como tocando pois tem autoplay
-            console.log('Rádio iniciada automaticamente');
+            if (isYouTubeSoundtrack) {
+                soundtrackPlaying = true; // YouTube já tem autoplay
+                console.log('YouTube soundtrack iniciado automaticamente');
+            } else if (radioPlayer && radioPlayer.src) {
+                soundtrackPlaying = true; // Rádio já tem autoplay
+                console.log('Rádio iniciada automaticamente');
+            }
         }, 1000);
 
         // Iniciar verificação periódica

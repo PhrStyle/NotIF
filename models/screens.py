@@ -10,4 +10,5 @@ class Screens(Base):
     name = Column(String(80), unique=True, nullable=False)
     temRodape = Column(Boolean, default=True, nullable=False)
     footer_text = Column(Text, nullable=True)  # Texto do rodapé
+    soundtrack = Column(Text, nullable=True)  # Link da soundtrack/radio
     screen_files = relationship("ScreenFiles", backref="screen", cascade="all, delete")

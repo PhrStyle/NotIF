@@ -79,6 +79,7 @@ def editar_tela(id_tela):
         screen.name = request.form.get('name')
         screen.temRodape = bool(request.form.get('temRodape'))
         screen.footer_text = request.form.get('footer_text', '')
+        screen.soundtrack = request.form.get('soundtrack', '')
 
         # Limpar configurações antigas dos lados
         session.query(ScreenFiles).filter(ScreenFiles.screen_id == id_tela).delete()
