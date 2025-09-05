@@ -27,37 +27,60 @@ def tela_exibicao(id_tela):
         session.close()
         return "Tela não encontrada", 404
 
-    # Buscar arquivos do lado esquerdo
-    left_files_query = session.query(ScreenFiles).filter(
-        ScreenFiles.screen_id == id_tela,
-        ScreenFiles.side == SideEnum.LEFT
-    ).order_by(ScreenFiles.order_position).all()
+    # Função para listar arquivos do Instagram
+    def get_instagram_files():
+        instagram_path = os.path.join('static', 'instagram')
+        instagram_files = []
 
-    # Buscar arquivos do lado direito
-    right_files_query = session.query(ScreenFiles).filter(
-        ScreenFiles.screen_id == id_tela,
-        ScreenFiles.side == SideEnum.RIGHT
-    ).order_by(ScreenFiles.order_position).all()
+        if os.path.exists(instagram_path):
+            for filename in os.listdir(instagram_path):
+                file_path = os.path.join(instagram_path, filename)
+                if os.path.isfile(file_path):
+                    # Determinar se é vídeo baseado na extensão
+                    is_video = filename.lower().endswith(('.mp4', '.avi', '.mov', '.mkv', '.webm'))
+                    instagram_files.append({
+                        'file_name': filename,
+                        'has_audio': False,  # Arquivos do Instagram nunca têm áudio
+                        'is_video': is_video
+                    })
+
+        return instagram_files
 
     # Preparar dados dos arquivos do lado esquerdo
-    left_files = []
-    for screen_file in left_files_query:
-        if screen_file.files:
-            left_files.append({
-                'file_name': screen_file.files.file_name,
-                'has_audio': screen_file.has_audio,
-                'is_video': screen_file.files.is_video
-            })
+    if screen.instagram_left:
+        left_files = get_instagram_files()
+    else:
+        left_files_query = session.query(ScreenFiles).filter(
+            ScreenFiles.screen_id == id_tela,
+            ScreenFiles.side == SideEnum.LEFT
+        ).order_by(ScreenFiles.order_position).all()
+
+        left_files = []
+        for screen_file in left_files_query:
+            if screen_file.files:
+                left_files.append({
+                    'file_name': screen_file.files.file_name,
+                    'has_audio': screen_file.has_audio,
+                    'is_video': screen_file.files.is_video
+                })
 
     # Preparar dados dos arquivos do lado direito
-    right_files = []
-    for screen_file in right_files_query:
-        if screen_file.files:
-            right_files.append({
-                'file_name': screen_file.files.file_name,
-                'has_audio': screen_file.has_audio,
-                'is_video': screen_file.files.is_video
-            })
+    if screen.instagram_right:
+        right_files = get_instagram_files()
+    else:
+        right_files_query = session.query(ScreenFiles).filter(
+            ScreenFiles.screen_id == id_tela,
+            ScreenFiles.side == SideEnum.RIGHT
+        ).order_by(ScreenFiles.order_position).all()
+
+        right_files = []
+        for screen_file in right_files_query:
+            if screen_file.files:
+                right_files.append({
+                    'file_name': screen_file.files.file_name,
+                    'has_audio': screen_file.has_audio,
+                    'is_video': screen_file.files.is_video
+                })
 
     session.close()
     return render_template("screen/display.html",
@@ -79,43 +102,48 @@ def editar_tela(id_tela):
         screen.name = request.form.get('name')
         screen.temRodape = bool(request.form.get('temRodape'))
         screen.footer_text = request.form.get('footer_text', '')
+        screen.soundtrack = request.form.get('soundtrack', '')
+        screen.instagram_left = bool(request.form.get('instagram_left'))
+        screen.instagram_right = bool(request.form.get('instagram_right'))
 
-        # Limpar configurações antigas dos lados
+        # Limpar configurações antigas dos lados (somente se não for integração Instagram)
         session.query(ScreenFiles).filter(ScreenFiles.screen_id == id_tela).delete()
 
-        # Processar lado esquerdo
-        left_files = request.form.getlist('left_files[]')
-        left_audio = request.form.getlist('left_audio[]')
+        # Processar lado esquerdo (somente se não for integração Instagram)
+        if not screen.instagram_left:
+            left_files = request.form.getlist('left_files[]')
+            left_audio = request.form.getlist('left_audio[]')
 
-        for idx, file_id in enumerate(left_files):
-            if file_id:
-                audio_enabled = str(file_id) in left_audio
-                screen_file = ScreenFiles(
-                    screen_id=id_tela,
-                    file_id=int(file_id),
-                    side=SideEnum.LEFT,
-                    media_type=MediaTypeEnum.FILE,
-                    has_audio=audio_enabled,
-                    order_position=idx
-                )
-                session.add(screen_file)
+            for idx, file_id in enumerate(left_files):
+                if file_id:
+                    audio_enabled = str(file_id) in left_audio
+                    screen_file = ScreenFiles(
+                        screen_id=id_tela,
+                        file_id=int(file_id),
+                        side=SideEnum.LEFT,
+                        media_type=MediaTypeEnum.FILE,
+                        has_audio=audio_enabled,
+                        order_position=idx
+                    )
+                    session.add(screen_file)
 
-        # Processar lado direito
-        right_files = request.form.getlist('right_files[]')
-        right_audio = request.form.getlist('right_audio[]')
+        # Processar lado direito (somente se não for integração Instagram)
+        if not screen.instagram_right:
+            right_files = request.form.getlist('right_files[]')
+            right_audio = request.form.getlist('right_audio[]')
 
-        for idx, file_id in enumerate(right_files):
-            if file_id:
-                audio_enabled = str(file_id) in right_audio
-                screen_file = ScreenFiles(
-                    screen_id=id_tela,
-                    file_id=int(file_id),
-                    side=SideEnum.RIGHT,
-                    media_type=MediaTypeEnum.FILE,
-                    has_audio=audio_enabled,
-                    order_position=idx
-                )
-                session.add(screen_file)
+            for idx, file_id in enumerate(right_files):
+                if file_id:
+                    audio_enabled = str(file_id) in right_audio
+                    screen_file = ScreenFiles(
+                        screen_id=id_tela,
+                        file_id=int(file_id),
+                        side=SideEnum.RIGHT,
+                        media_type=MediaTypeEnum.FILE,
+                        has_audio=audio_enabled,
+                        order_position=idx
+                    )
+                    session.add(screen_file)
 
         session.commit()
         session.close()
@@ -422,3 +450,26 @@ def criar_tela_vazia():
         session.rollback()
         session.close()
         return f"Erro ao criar tela: {str(e)}", 500
+
+@screens_bp.route('/api/instagram-files')
+def get_instagram_files():
+    """API para listar arquivos do Instagram"""
+    try:
+        instagram_path = os.path.join('static', 'instagram')
+        instagram_files = []
+        
+        if os.path.exists(instagram_path):
+            for filename in os.listdir(instagram_path):
+                file_path = os.path.join(instagram_path, filename)
+                if os.path.isfile(file_path):
+                    # Determinar se é vídeo baseado na extensão
+                    is_video = filename.lower().endswith(('.mp4', '.avi', '.mov', '.mkv', '.webm'))
+                    instagram_files.append({
+                        'file_name': filename,
+                        'is_video': is_video
+                    })
+        
+        return jsonify(instagram_files)
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500

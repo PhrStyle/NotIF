@@ -8,10 +8,24 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         .media-column {
-            min-height: 500px;
+            min-height: 400px;
             border: 2px solid #dee2e6;
             border-radius: 8px;
             padding: 1rem;
+            overflow: visible;
+        }
+
+        .media-column-content {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .media-list {
+            max-height: 350px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            flex-grow: 1;
         }
 
         .column-left {
@@ -44,7 +58,42 @@
             text-align: center;
             color: #6c757d;
             font-style: italic;
-            padding: 3rem 1rem;
+            padding: 2rem 1rem;
+        }
+
+        /* Transições suaves para mudanças de layout */
+        .col-md-6, .col-md-12 {
+            transition: all 0.3s ease;
+        }
+
+        /* Scroll personalizado para melhor aparência */
+        .media-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .media-list::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+
+        .media-list::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 3px;
+        }
+
+        .media-list::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+
+        /* Controles fixos sem scroll */
+        .media-controls {
+            flex-shrink: 0;
+            margin-bottom: 1rem;
+        }
+
+        .file-upload-area {
+            flex-shrink: 0;
+            margin-top: 1rem;
         }
     </style>
 </head>
@@ -133,15 +182,17 @@
                 <div class="tab-pane fade show active" id="left-tab" role="tabpanel">
                     <div class="mb-3">
                         <div class="form-check">
-                            <input type="checkbox" class="form-check-input" id="left_instagram" name="left_instagram">
-                            <label class="form-check-label" for="left_instagram">
+                            <input type="checkbox" class="form-check-input" id="instagram_left" name="instagram_left"
+                                   {% if screen.instagram_left %}checked{% endif %} onchange="toggleInstagramIntegration('left', this.checked)">
+                            <label class="form-check-label" for="instagram_left">
                                 <i class="fab fa-instagram me-1"></i>Integração Instagram
                             </label>
                         </div>
                     </div>
 
-                    <div class="row">
-                        <div class="col-md-6">
+                    <div class="row" id="left-media-row">
+                        <!-- Colunas normais (sempre presentes, mas podem ser escondidas) -->
+                        <div class="col-md-6" id="left-normal-side-column">
                             <div class="media-column column-left" id="left-drop-zone" ondrop="drop(event, 'left')" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
                                 <h6 class="mb-3"><i class="fas fa-images me-2"></i>Mídias do Lado Esquerdo</h6>
                                 <input type="text" class="form-control mb-3" placeholder="Filtrar por nome..." onkeyup="filterMedia('left', 'side', this.value)">
@@ -155,7 +206,7 @@
                             </div>
                         </div>
 
-                        <div class="col-md-6">
+                        <div class="col-md-6" id="left-normal-bank-column">
                             <div class="media-column" id="left-bank-zone">
                                 <h6 class="mb-3"><i class="fas fa-database me-2"></i>Banco de Mídias</h6>
                                 <input type="text" class="form-control mb-3" placeholder="Filtrar por nome..." onkeyup="filterMedia('left', 'bank', this.value)">
@@ -172,6 +223,20 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Coluna do Instagram (inicialmente escondida) -->
+                        <div class="col-md-12" id="left-instagram-column" style="display: none;">
+                            <div class="media-column">
+                                <h6 class="mb-3"><i class="fab fa-instagram me-2"></i>Mídias do Instagram - Lado Esquerdo</h6>
+                                <input type="text" class="form-control mb-3" placeholder="Filtrar por nome..." onkeyup="filterInstagramMedia('left', this.value)">
+                                <div id="left-instagram-media" class="media-list">
+                                    <div id="leftInstagramEmptyMessage" class="empty-message">
+                                        <i class="fab fa-instagram fa-2x mb-2"></i>
+                                        <div>Carregando mídias do Instagram...</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -179,15 +244,17 @@
                 <div class="tab-pane fade" id="right-tab" role="tabpanel">
                     <div class="mb-3">
                         <div class="form-check">
-                            <input type="checkbox" class="form-check-input" id="right_instagram" name="right_instagram">
-                            <label class="form-check-label" for="right_instagram">
+                            <input type="checkbox" class="form-check-input" id="instagram_right" name="instagram_right"
+                                   {% if screen.instagram_right %}checked{% endif %} onchange="toggleInstagramIntegration('right', this.checked)">
+                            <label class="form-check-label" for="instagram_right">
                                 <i class="fab fa-instagram me-1"></i>Integração Instagram
                             </label>
                         </div>
                     </div>
 
-                    <div class="row">
-                        <div class="col-md-6">
+                    <div class="row" id="right-media-row">
+                        <!-- Colunas normais (sempre presentes, mas podem ser escondidas) -->
+                        <div class="col-md-6" id="right-normal-side-column">
                             <div class="media-column column-left" id="right-drop-zone" ondrop="drop(event, 'right')" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
                                 <h6 class="mb-3"><i class="fas fa-images me-2"></i>Mídias do Lado Direito</h6>
                                 <input type="text" class="form-control mb-3" placeholder="Filtrar por nome..." onkeyup="filterMedia('right', 'side', this.value)">
@@ -201,7 +268,7 @@
                             </div>
                         </div>
 
-                        <div class="col-md-6">
+                        <div class="col-md-6" id="right-normal-bank-column">
                             <div class="media-column" id="right-bank-zone">
                                 <h6 class="mb-3"><i class="fas fa-database me-2"></i>Banco de Mídias</h6>
                                 <input type="text" class="form-control mb-3" placeholder="Filtrar por nome..." onkeyup="filterMedia('right', 'bank', this.value)">
@@ -214,6 +281,20 @@
                                     <div class="text-center text-muted">
                                         <i class="fas fa-cloud-upload-alt me-1"></i>
                                         Enviar arquivos
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Coluna do Instagram (inicialmente escondida) -->
+                        <div class="col-md-12" id="right-instagram-column" style="display: none;">
+                            <div class="media-column">
+                                <h6 class="mb-3"><i class="fab fa-instagram me-2"></i>Mídias do Instagram - Lado Direito</h6>
+                                <input type="text" class="form-control mb-3" placeholder="Filtrar por nome..." onkeyup="filterInstagramMedia('right', this.value)">
+                                <div id="right-instagram-media" class="media-list">
+                                    <div id="rightInstagramEmptyMessage" class="empty-message">
+                                        <i class="fab fa-instagram fa-2x mb-2"></i>
+                                        <div>Carregando mídias do Instagram...</div>
                                     </div>
                                 </div>
                             </div>
@@ -468,6 +549,21 @@ function filterMedia(side, location, searchTerm) {
     });
 }
 
+function filterInstagramMedia(side, searchTerm) {
+    const containerId = side + '-instagram-media';
+    const container = document.getElementById(containerId);
+    const items = container.querySelectorAll('.media-item');
+
+    items.forEach(item => {
+        const name = item.querySelector('.fw-bold').textContent.toLowerCase();
+        if (name.includes(searchTerm.toLowerCase())) {
+            item.style.display = 'block';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
 function updateHiddenFields() {
     const hiddenFields = document.getElementById('hidden-fields');
     hiddenFields.innerHTML = '';
@@ -565,6 +661,91 @@ function showToast(message, type) {
     toast.show();
 }
 
+// Função para alternar integração Instagram
+function toggleInstagramIntegration(side, enabled) {
+    const normalSideColumn = document.getElementById(side + '-normal-side-column');
+    const normalBankColumn = document.getElementById(side + '-normal-bank-column');
+    const instagramColumn = document.getElementById(side + '-instagram-column');
+
+    if (enabled) {
+        // Ocultar AMBAS as colunas normais e mostrar coluna do Instagram
+        normalSideColumn.style.display = 'none';
+        normalBankColumn.style.display = 'none';
+        instagramColumn.style.display = 'block';
+
+        // Carregar arquivos do Instagram
+        loadInstagramFiles(side);
+    } else {
+        // Restaurar estado normal - mostrar ambas as colunas
+        normalSideColumn.style.display = 'block';
+        normalBankColumn.style.display = 'block';
+        instagramColumn.style.display = 'none';
+
+        // Forçar re-layout
+        normalSideColumn.offsetHeight;
+        normalBankColumn.offsetHeight;
+    }
+}
+
+// Função para carregar arquivos do Instagram
+function loadInstagramFiles(side) {
+    fetch('/api/instagram-files')
+        .then(response => response.json())
+        .then(files => {
+            const container = document.getElementById(side + '-instagram-media');
+            const emptyMessage = document.getElementById(side + 'InstagramEmptyMessage');
+
+            // Limpar container
+            const items = container.querySelectorAll('.media-item');
+            items.forEach(item => item.remove());
+
+            if (files.length === 0) {
+                emptyMessage.style.display = 'block';
+            } else {
+                emptyMessage.style.display = 'none';
+                files.forEach(file => {
+                    const element = createInstagramMediaElement(file, side);
+                    container.appendChild(element);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao carregar arquivos do Instagram:', error);
+            showToast('Erro ao carregar arquivos do Instagram', 'danger');
+        });
+}
+
+// Função para criar elemento de mídia do Instagram (somente visualização)
+function createInstagramMediaElement(file, side) {
+    const div = document.createElement('div');
+    div.className = 'card mb-2 media-item instagram-media';
+    div.style.cursor = 'default'; // Não é arrastável
+
+    const isVideo = file.is_video;
+    const mediaElement = isVideo ? 'video' : 'img';
+
+    div.innerHTML = `
+        <div class="card-body p-2">
+            <div class="d-flex align-items-center">
+                <${mediaElement} class="media-preview me-3" src="/static/instagram/${file.file_name}" ${isVideo ? 'muted' : ''}></${mediaElement}>
+                <div class="flex-grow-1">
+                    <div class="fw-bold">${file.file_name}</div>
+                    <small class="text-muted">
+                        <i class="fab fa-instagram me-1"></i>
+                        ${isVideo ? 'Vídeo Instagram' : 'Imagem Instagram'}
+                        ${isVideo ? ' (sem áudio)' : ''}
+                    </small>
+                </div>
+                <div class="ms-2">
+                    <i class="fas fa-eye text-muted" title="Apenas visualização"></i>
+                </div>
+            </div>
+        </div>
+    `;
+
+    return div;
+}
+
 // Inicialização
 document.addEventListener('DOMContentLoaded', function() {
     // Carregar configurações existentes
@@ -602,6 +783,18 @@ document.addEventListener('DOMContentLoaded', function() {
     renderBankMedia('left');
     renderBankMedia('right');
     updateHiddenFields();
+
+    // Verificar se as integrações Instagram já estão ativadas e aplicar o estado correto
+    const instagramLeftCheckbox = document.getElementById('instagram_left');
+    const instagramRightCheckbox = document.getElementById('instagram_right');
+
+    if (instagramLeftCheckbox && instagramLeftCheckbox.checked) {
+        toggleInstagramIntegration('left', true);
+    }
+
+    if (instagramRightCheckbox && instagramRightCheckbox.checked) {
+        toggleInstagramIntegration('right', true);
+    }
 });
 </script>
 {% endblock %}

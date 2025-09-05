@@ -11,4 +11,6 @@ class Screens(Base):
     temRodape = Column(Boolean, default=True, nullable=False)
     footer_text = Column(Text, nullable=True)  # Texto do rodapé
     soundtrack = Column(Text, nullable=True)  # Link da soundtrack/radio
+    instagram_left = Column(Boolean, default=False, nullable=False)  # Integração Instagram lado esquerdo
+    instagram_right = Column(Boolean, default=False, nullable=False)  # Integração Instagram lado direito
     screen_files = relationship("ScreenFiles", backref="screen", cascade="all, delete")

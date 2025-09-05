@@ -245,7 +245,10 @@
             if (!files || files.length === 0) return;
 
             const file = files[index];
-            const mediaPath = `/static/files/${file.file_name}`;
+
+            // Definir o caminho baseado se é Instagram ou arquivo normal
+            const isInstagram = {{ screen.instagram_left|tojson if side == 'left' else screen.instagram_right|tojson }};
+            const mediaPath = isInstagram ? `/static/instagram/${file.file_name}` : `/static/files/${file.file_name}`;
 
             let mediaElement;
             if (file.is_video) {
@@ -254,11 +257,11 @@
                 mediaElement.className = 'media-content';
                 mediaElement.autoplay = true;
 
-                // Configurar áudio
-                if (file.has_audio) {
-                    mediaElement.muted = false;
-                } else {
+                // Configurar áudio - arquivos do Instagram nunca têm áudio
+                if (isInstagram || !file.has_audio) {
                     mediaElement.muted = true;
+                } else {
+                    mediaElement.muted = false;
                 }
 
                 // Armazenar referência do vídeo
@@ -270,7 +273,7 @@
 
                 // Quando o vídeo começar a tocar
                 mediaElement.addEventListener('playing', () => {
-                    if (file.has_audio) {
+                    if (!isInstagram && file.has_audio) {
                         currentPlayingAudio = mediaElement;
                         stopSoundtrack();
                         console.log('Vídeo com áudio iniciou - soundtrack pausada');
@@ -280,7 +283,7 @@
                 // Quando o vídeo terminar
                 mediaElement.addEventListener('ended', () => {
                     // Se tinha áudio, limpar referência e verificar se deve reiniciar soundtrack
-                    if (file.has_audio && currentPlayingAudio === mediaElement) {
+                    if (!isInstagram && file.has_audio && currentPlayingAudio === mediaElement) {
                         currentPlayingAudio = null;
                         console.log('Vídeo com áudio terminou - verificando soundtrack');
 
