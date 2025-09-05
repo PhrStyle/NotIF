@@ -77,6 +77,10 @@
     </style>
 </head>
 <body>
+    <audio id="radioPlayer" autoplay loop preload="auto">
+      <source src="http://sv13.hdradios.net:6990/;" type="audio/mpeg">
+    </audio>
+
     <div class="main-container">
         <div class="display-area">
             <!-- Lado esquerdo -->
@@ -120,6 +124,87 @@
         let audioQueue = [];
         let currentPlayingAudio = null;
 
+        // Controle da rádio
+        const radioPlayer = document.getElementById('radioPlayer');
+        let radioPlaying = false;
+
+        // Verificação periódica dos vídeos
+        let videoCheckInterval;
+
+        // Funções para controlar a rádio
+        function startRadio() {
+            if (!radioPlaying) {
+                radioPlayer.play().then(() => {
+                    radioPlaying = true;
+                    console.log('Rádio iniciada');
+                }).catch(e => {
+                    console.log('Erro ao iniciar rádio:', e);
+                });
+            }
+        }
+
+        function stopRadio() {
+            if (radioPlaying) {
+                radioPlayer.pause();
+                radioPlaying = false;
+                console.log('Rádio pausada');
+            }
+        }
+
+        // Verificar se os vídeos estão tocando
+        function checkVideoStatus() {
+            let shouldAdvance = false;
+
+            // Verificar lado esquerdo
+            if (leftVideoElement && leftFiles.length > 0) {
+                const currentFile = leftFiles[leftIndex];
+                if (currentFile && currentFile.is_video) {
+                    if (leftVideoElement.paused && leftVideoElement.currentTime === 0 && leftVideoElement.readyState >= 2) {
+                        console.log('Vídeo esquerdo não está tocando - avançando');
+                        shouldAdvance = true;
+                        nextLeftMedia();
+                    } else if (leftVideoElement.paused && leftVideoElement.currentTime > 0) {
+                        // Vídeo pausou no meio - tentar reproduzir
+                        leftVideoElement.play().catch(e => {
+                            console.log('Erro ao tentar reproduzir vídeo esquerdo:', e);
+                            nextLeftMedia();
+                        });
+                    }
+                }
+            }
+
+            // Verificar lado direito
+            if (rightVideoElement && rightFiles.length > 0) {
+                const currentFile = rightFiles[rightIndex];
+                if (currentFile && currentFile.is_video) {
+                    if (rightVideoElement.paused && rightVideoElement.currentTime === 0 && rightVideoElement.readyState >= 2) {
+                        console.log('Vídeo direito não está tocando - avançando');
+                        shouldAdvance = true;
+                        nextRightMedia();
+                    } else if (rightVideoElement.paused && rightVideoElement.currentTime > 0) {
+                        // Vídeo pausou no meio - tentar reproduzir
+                        rightVideoElement.play().catch(e => {
+                            console.log('Erro ao tentar reproduzir vídeo direito:', e);
+                            nextRightMedia();
+                        });
+                    }
+                }
+            }
+
+            if (shouldAdvance) {
+                console.log('Vídeos verificados - alguns foram avançados');
+            }
+        }
+
+        // Iniciar verificação periódica
+        function startVideoCheck() {
+            if (videoCheckInterval) {
+                clearInterval(videoCheckInterval);
+            }
+            videoCheckInterval = setInterval(checkVideoStatus, 10000); // A cada 10 segundos
+            console.log('Verificação periódica de vídeos iniciada');
+        }
+
         function displayMedia(files, container, index, side) {
             if (!files || files.length === 0) return;
 
@@ -130,13 +215,12 @@
             if (file.is_video) {
                 mediaElement = document.createElement('video');
                 mediaElement.src = mediaPath;
-                mediaElement.autoplay = true;
                 mediaElement.className = 'media-content';
+                mediaElement.autoplay = true;
 
                 // Configurar áudio
                 if (file.has_audio) {
                     mediaElement.muted = false;
-                    handleVideoAudio(mediaElement, side);
                 } else {
                     mediaElement.muted = true;
                 }
@@ -148,24 +232,35 @@
                     rightVideoElement = mediaElement;
                 }
 
-                // Quando o vídeo terminar, avançar para próxima mídia
-                mediaElement.addEventListener('ended', () => {
-                    if (side === 'left') {
-                        nextLeftMedia();
-                    } else {
-                        nextRightMedia();
-                    }
-
-                    // Remover da fila de áudio se estava tocando
-                    if (currentPlayingAudio === mediaElement) {
-                        playNextInAudioQueue();
-                    }
-                });
-
                 // Quando o vídeo começar a tocar
                 mediaElement.addEventListener('playing', () => {
                     if (file.has_audio) {
                         currentPlayingAudio = mediaElement;
+                        stopRadio();
+                        console.log('Vídeo com áudio iniciou - rádio pausada');
+                    }
+                });
+
+                // Quando o vídeo terminar
+                mediaElement.addEventListener('ended', () => {
+                    // Se tinha áudio, limpar referência e verificar se deve reiniciar rádio
+                    if (file.has_audio && currentPlayingAudio === mediaElement) {
+                        currentPlayingAudio = null;
+                        console.log('Vídeo com áudio terminou - verificando rádio');
+
+                        // Aguardar um pouco e verificar se deve reiniciar rádio
+                        setTimeout(() => {
+                            if (!currentPlayingAudio) {
+                                startRadio();
+                            }
+                        }, 1000);
+                    }
+
+                    // Avançar para próxima mídia
+                    if (side === 'left') {
+                        nextLeftMedia();
+                    } else {
+                        nextRightMedia();
                     }
                 });
 
@@ -178,30 +273,6 @@
             // Limpar container e adicionar nova mídia
             container.innerHTML = '';
             container.appendChild(mediaElement);
-        }
-
-        function handleVideoAudio(videoElement, side) {
-            // Se já há um vídeo tocando com áudio, pausar o novo e adicionar à fila
-            if (currentPlayingAudio && currentPlayingAudio !== videoElement) {
-                videoElement.pause();
-                audioQueue.push({element: videoElement, side: side});
-                return;
-            }
-
-            // Se não há nada tocando, este vídeo pode tocar
-            if (!currentPlayingAudio) {
-                currentPlayingAudio = videoElement;
-            }
-        }
-
-        function playNextInAudioQueue() {
-            currentPlayingAudio = null;
-
-            if (audioQueue.length > 0) {
-                const nextVideo = audioQueue.shift();
-                currentPlayingAudio = nextVideo.element;
-                nextVideo.element.play();
-            }
         }
 
         function nextLeftMedia() {
@@ -257,6 +328,15 @@
                 rightTimer = setTimeout(nextRightMedia, 15000);
             }
         }
+
+        // Inicializar rádio após um tempo
+        setTimeout(() => {
+            radioPlaying = true; // Marcar como tocando pois tem autoplay
+            console.log('Rádio iniciada automaticamente');
+        }, 1000);
+
+        // Iniciar verificação periódica
+        startVideoCheck();
     </script>
 </body>
 </html>
