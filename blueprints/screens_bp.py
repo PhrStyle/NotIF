@@ -79,7 +79,6 @@ def editar_tela(id_tela):
         screen.name = request.form.get('name')
         screen.temRodape = bool(request.form.get('temRodape'))
         screen.footer_text = request.form.get('footer_text', '')
-        screen.soundtrack = request.form.get('soundtrack', '')
 
         # Limpar configurações antigas dos lados
         session.query(ScreenFiles).filter(ScreenFiles.screen_id == id_tela).delete()
@@ -383,3 +382,43 @@ def update_media_name(media_id):
         return jsonify({'success': False, 'message': str(e)})
     finally:
         session.close()
+
+
+@screens_bp.route('/criar-tela-vazia', methods=['POST'])
+def criar_tela_vazia():
+    session = SessionLocal()
+
+    try:
+        # Gerar nome único para a nova tela
+        base_name = "Nova Tela"
+        counter = 1
+        name = base_name
+
+        # Verificar se já existe uma tela com esse nome
+        while session.query(Screens).filter(Screens.name == name).first():
+            counter += 1
+            name = f"{base_name} {counter}"
+
+        # Criar nova tela com nome único
+        new_screen = Screens(
+            name=name,
+            temRodape=False,
+            footer_text="",
+            soundtrack=""
+        )
+
+        session.add(new_screen)
+        session.commit()
+
+        # Obter o ID da tela recém-criada
+        screen_id = new_screen.id
+
+        session.close()
+
+        # Redirecionar para a tela de edição
+        return redirect(url_for('screens_bp.editar_tela', id_tela=screen_id))
+
+    except Exception as e:
+        session.rollback()
+        session.close()
+        return f"Erro ao criar tela: {str(e)}", 500
