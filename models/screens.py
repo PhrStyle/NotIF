@@ -13,4 +13,5 @@ class Screens(Base):
     soundtrack = Column(Text, nullable=True)  # Link da soundtrack/radio
     instagram_left = Column(Boolean, default=False, nullable=False)  # Integração Instagram lado esquerdo
     instagram_right = Column(Boolean, default=False, nullable=False)  # Integração Instagram lado direito
+    news_integration = Column(Boolean, default=False, nullable=False)  # Integração notícias IFMT
     screen_files = relationship("ScreenFiles", backref="screen", cascade="all, delete")

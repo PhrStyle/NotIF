@@ -74,6 +74,33 @@
             font-size: 18px;
             text-align: center;
         }
+
+        .news-ticker {
+            width: 100%;
+            overflow: hidden;
+            white-space: nowrap;
+            box-sizing: border-box;
+        }
+
+        .news-content {
+            display: inline-block;
+            padding-left: 100%;
+            animation: ticker 30s linear infinite;
+        }
+
+        .news-label {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        @keyframes ticker {
+            0% {
+                transform: translate(0);
+            }
+            100% {
+                transform: translate(-100%);
+            }
+        }
     </style>
 </head>
 <body>
@@ -115,7 +142,19 @@
 
         {% if screen.temRodape %}
         <div class="footer">
-            {{ screen.footer_text if screen.footer_text else "Rodapé da tela" }}
+            {% if screen.news_integration and news_list %}
+                <div class="news-ticker">
+                    <div class="news-content">
+                        <span class="news-label"><i class="fas fa-newspaper"></i> IFMT CBA - Notícias:</span>
+                        {% for news in news_list %}
+                            <span class="news-item">{{ news }}</span>
+                            {% if not loop.last %} • {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            {% else %}
+                {{ screen.footer_text if screen.footer_text else "Rodapé da tela" }}
+            {% endif %}
         </div>
         {% endif %}
     </div>

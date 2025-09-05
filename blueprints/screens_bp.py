@@ -5,6 +5,7 @@ from models.files import Files
 from db_init import SessionLocal
 from services.instagramService import InstagramService
 from services.fileUploadService import FileUploadService
+from services.newsService import NewsService
 import os
 
 from services.screenFilesService import buscar_files_por_screen
@@ -26,6 +27,11 @@ def tela_exibicao(id_tela):
     if not screen:
         session.close()
         return "Tela não encontrada", 404
+
+    # Buscar notícias se a integração estiver ativa
+    news_list = []
+    if screen.news_integration:
+        news_list = NewsService.get_ifmt_news()
 
     # Função para listar arquivos do Instagram
     def get_instagram_files():
@@ -86,7 +92,8 @@ def tela_exibicao(id_tela):
     return render_template("screen/display.html",
                          screen=screen,
                          left_files=left_files,
-                         right_files=right_files)
+                         right_files=right_files,
+                         news_list=news_list)
 
 @screens_bp.route('/editartela/<int:id_tela>', methods=['GET', 'POST'])
 def editar_tela(id_tela):
@@ -105,6 +112,7 @@ def editar_tela(id_tela):
         screen.soundtrack = request.form.get('soundtrack', '')
         screen.instagram_left = bool(request.form.get('instagram_left'))
         screen.instagram_right = bool(request.form.get('instagram_right'))
+        screen.news_integration = bool(request.form.get('news_integration'))
 
         # Limpar configurações antigas dos lados (somente se não for integração Instagram)
         session.query(ScreenFiles).filter(ScreenFiles.screen_id == id_tela).delete()
