@@ -6,86 +6,6 @@
     <title>Gerenciar Telas - NOTIF</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        .tela-card {
-            transition: transform 0.2s;
-            min-width: 270px;
-            max-width: 270px;
-        }
-
-        .tela-card:hover {
-            transform: translateY(-2px);
-        }
-
-        .tela-miniatura {
-            width: 100%;
-            max-width: 250px;
-            height: 150px;
-            margin: 0 auto 15px auto;
-            border: 2px solid #dee2e6;
-            border-radius: 8px;
-            background: #000;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .tela-miniatura.sem-rodape {
-            height: 120px;
-        }
-
-        .miniatura-content {
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .miniatura-display {
-            display: flex;
-            flex: 1;
-        }
-
-        .miniatura-side {
-            flex: 1;
-            background: #333;
-            border-right: 1px solid #666;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #999;
-            font-size: 12px;
-        }
-
-        .miniatura-side:last-child {
-            border-right: none;
-        }
-
-        .miniatura-footer {
-            height: 25px;
-            background: #444;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #aaa;
-            font-size: 10px;
-            border-top: 1px solid #666;
-        }
-
-        .search-container {
-            position: relative;
-        }
-
-        .search-container .fa-search {
-            position: absolute;
-            left: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #6c757d;
-        }
-
-        .search-input {
-            padding-left: 40px;
-        }
-    </style>
 </head>
 <body>
     {% extends "base.html" %}
@@ -95,8 +15,8 @@
     {% block extra_css %}
     .tela-card {
         transition: transform 0.2s;
-        min-width: 270px;
-        max-width: 270px;
+        min-width: 300px;
+        max-width: 300px;
     }
 
     .tela-card:hover {
@@ -222,12 +142,15 @@
                     </div>
                     <div class="card-footer bg-transparent">
                         <div class="d-flex gap-2">
-                            <a href="/tela/{{ tela.id }}" class="btn btn-success btn-sm flex-fill">
+                            <a href="{{ url_for('screens_bp.tela_exibicao', id_tela=tela.id) }}" class="btn btn-success btn-sm flex-fill">
                                 <i class="fas fa-play me-1"></i>Visualizar
                             </a>
-                            <a href="/editartela/{{ tela.id }}" class="btn btn-primary btn-sm flex-fill">
+                            <a href="{{ url_for('screens_bp.editar_tela', id_tela=tela.id) }}" class="btn btn-primary btn-sm flex-fill">
                                 <i class="fas fa-edit me-1"></i>Editar
                             </a>
+                            <button type="button" class="btn btn-danger btn-sm flex-fill" onclick="showDeleteConfirm({{ tela.id }}, '{{ tela.name }}')">
+                                <i class="fas fa-trash me-1"></i>Excluir
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -247,16 +170,53 @@
             <p class="text-muted">Crie sua primeira tela de exibição</p>
         </div>
     {% endif %}
+
+    <!-- Modal de Confirmação de Exclusão -->
+    <div class="modal fade" id="deleteModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmar Exclusão</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center">
+                        <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                        <p>Tem certeza que deseja excluir a tela <strong id="deleteScreenName"></strong>?</p>
+                        <p class="text-muted">Esta ação não pode ser desfeita.</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                        <i class="fas fa-trash me-1"></i>Excluir Tela
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     {% endblock %}
 
     {% block extra_js %}
     <script>
+    let screenToDelete = null;
+
+    // Função para mostrar o modal de confirmação
+    function showDeleteConfirm(screenId, screenName) {
+        screenToDelete = screenId;
+        document.getElementById('deleteScreenName').textContent = screenName;
+        const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        modal.show();
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
         const searchInput = document.getElementById('searchInput');
         const telasContainer = document.getElementById('telasContainer');
         const telaItems = document.querySelectorAll('.tela-item');
         const noResultsMessage = document.getElementById('noResultsMessage');
 
+        // Funcionalidade de busca
         if (searchInput && telaItems.length > 0) {
             searchInput.addEventListener('input', function() {
                 const searchTerm = this.value.toLowerCase().trim();
@@ -289,7 +249,84 @@
                 }
             });
         }
+
+        // Funcionalidade de exclusão
+        document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+            if (screenToDelete) {
+                // Mostrar loading no botão
+                this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Excluindo...';
+                this.disabled = true;
+
+                // Fazer requisição para excluir a tela
+                fetch(`{{ url_for('screens_bp.excluir_tela', screen_id=0) }}`.replace('0', screenToDelete), {
+                    method: 'DELETE'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Fechar modal
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
+                        modal.hide();
+
+                        // Mostrar mensagem de sucesso e recarregar página
+                        showToast('Tela excluída com sucesso!', 'success');
+
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1500);
+                    } else {
+                        showToast('Erro ao excluir tela: ' + (data.message || 'Erro desconhecido'), 'danger');
+
+                        // Restaurar botão
+                        this.innerHTML = '<i class="fas fa-trash me-1"></i>Excluir Tela';
+                        this.disabled = false;
+                    }
+                })
+                .catch(error => {
+                    showToast('Erro ao excluir tela: ' + error.message, 'danger');
+
+                    // Restaurar botão
+                    this.innerHTML = '<i class="fas fa-trash me-1"></i>Excluir Tela';
+                    this.disabled = false;
+                });
+            }
+        });
+
+        // Reset do modal quando fechado
+        document.getElementById('deleteModal').addEventListener('hidden.bs.modal', function() {
+            screenToDelete = null;
+            const btn = document.getElementById('confirmDeleteBtn');
+            btn.innerHTML = '<i class="fas fa-trash me-1"></i>Excluir Tela';
+            btn.disabled = false;
+        });
     });
+
+    // Função para mostrar toasts
+    function showToast(message, type) {
+        const toastHTML = `
+            <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong class="me-auto">NOTIF</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+                </div>
+                <div class="toast-body bg-${type} text-white">
+                    ${message}
+                </div>
+            </div>
+        `;
+
+        let toastContainer = document.querySelector('.toast-container');
+        if (!toastContainer) {
+            toastContainer = document.createElement('div');
+            toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+            document.body.appendChild(toastContainer);
+        }
+
+        toastContainer.insertAdjacentHTML('beforeend', toastHTML);
+        const toast = new bootstrap.Toast(toastContainer.lastElementChild);
+        toast.show();
+    }
     </script>
     {% endblock %}
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

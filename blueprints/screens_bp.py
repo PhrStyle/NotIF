@@ -492,3 +492,32 @@ def get_instagram_files():
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@screens_bp.route('/excluir-tela/<int:screen_id>', methods=['DELETE'])
+@login_required
+def excluir_tela(screen_id):
+    """Excluir uma tela"""
+    session = SessionLocal()
+
+    try:
+        # Buscar a tela
+        screen = session.query(Screens).get(screen_id)
+
+        if not screen:
+            return jsonify({'success': False, 'message': 'Tela não encontrada'}), 404
+
+        # Remover todas as associações de arquivos da tela
+        session.query(ScreenFiles).filter(ScreenFiles.screen_id == screen_id).delete()
+
+        # Remover a tela
+        session.delete(screen)
+        session.commit()
+
+        return jsonify({'success': True, 'message': 'Tela excluída com sucesso'})
+
+    except Exception as e:
+        session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+    finally:
+        session.close()
+
