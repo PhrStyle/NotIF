@@ -6,6 +6,7 @@ from db_init import SessionLocal
 from services.instagramService import InstagramService
 from services.fileUploadService import FileUploadService
 from services.newsService import NewsService
+from blueprints.auth_bp import login_required
 import os
 
 from services.screenFilesService import buscar_files_por_screen
@@ -15,6 +16,7 @@ screens_bp = Blueprint('screens_bp', __name__, template_folder='../templates/scr
 
 
 @screens_bp.route('/vertelas')
+@login_required
 def ver_telas():
     telas = ScreenService.buscar_telas()
     return render_template("screen/index.html", telas=telas)
@@ -96,6 +98,7 @@ def tela_exibicao(id_tela):
                          news_list=news_list)
 
 @screens_bp.route('/editartela/<int:id_tela>', methods=['GET', 'POST'])
+@login_required
 def editar_tela(id_tela):
     session = SessionLocal()
     screen = session.query(Screens).get(id_tela)
@@ -224,6 +227,7 @@ def editar_tela(id_tela):
                          right_config=right_config)
 
 @screens_bp.route('/api/upload', methods=['POST'])
+@login_required
 def upload_file():
     """API endpoint para upload de arquivos"""
     try:
@@ -247,6 +251,7 @@ def upload_file():
 # Rotas para gerenciamento do banco de mídias
 
 @screens_bp.route('/banco-midias')
+@login_required
 def banco_midias():
     """Tela de gerenciamento do banco de mídias"""
     session = SessionLocal()
@@ -273,6 +278,7 @@ def banco_midias():
 
 
 @screens_bp.route('/upload-midias', methods=['POST'])
+@login_required
 def upload_midias():
     """Upload múltiplo de mídias"""
     session = SessionLocal()
@@ -317,6 +323,7 @@ def upload_midias():
 
 
 @screens_bp.route('/delete-media/<int:media_id>', methods=['DELETE'])
+@login_required
 def delete_media(media_id):
     """Excluir uma mídia do banco"""
     session = SessionLocal()
@@ -364,6 +371,7 @@ def delete_media(media_id):
 
 
 @screens_bp.route('/download-media/<int:media_id>')
+@login_required
 def download_media(media_id):
     """Download de uma mídia"""
     session = SessionLocal()
@@ -390,6 +398,7 @@ def download_media(media_id):
 
 
 @screens_bp.route('/update-media-name/<int:media_id>', methods=['POST'])
+@login_required
 def update_media_name(media_id):
     """Atualizar o nome de uma mídia"""
     session = SessionLocal()
@@ -421,6 +430,7 @@ def update_media_name(media_id):
 
 
 @screens_bp.route('/criar-tela-vazia', methods=['POST'])
+@login_required
 def criar_tela_vazia():
     session = SessionLocal()
 
@@ -460,6 +470,7 @@ def criar_tela_vazia():
         return f"Erro ao criar tela: {str(e)}", 500
 
 @screens_bp.route('/api/instagram-files')
+@login_required
 def get_instagram_files():
     """API para listar arquivos do Instagram"""
     try:

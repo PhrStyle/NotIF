@@ -1,11 +1,12 @@
 import flask
 from dotenv import load_dotenv
-from flask import Flask, send_from_directory
+from flask import Flask, send_from_directory, session
 import os
 import json
 import re
 
 from blueprints.screens_bp import screens_bp
+from blueprints.auth_bp import auth_bp
 from db_init import init_db
 
 load_dotenv()
@@ -15,6 +16,7 @@ SQLALCHEMY_TRACK_MODIFICATIONS = False
 init_db()
 
 app = Flask(__name__)
+app.secret_key = os.getenv('SECRET_KEY', 'super-secreto')
 
 # Registrar filtro personalizado para JSON
 @app.template_filter('tojsonfilter')
@@ -48,6 +50,8 @@ def extract_youtube_id(url):
     
     return ''
 
+# Registrar blueprints
+app.register_blueprint(auth_bp)
 app.register_blueprint(screens_bp)
 
 # Rota para servir arquivos estáticos da pasta files
