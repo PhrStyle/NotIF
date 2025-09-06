@@ -14,9 +14,8 @@
     }
 
     .media-item:hover {
+        border-color: #28a745;
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        border-color: #007bff;
     }
 
     .media-preview {
@@ -86,6 +85,16 @@
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+    }
+
+    .btn-outline-primary {
+        border-color: #28a745;
+        color: #28a745;
+    }
+
+    .btn-outline-primary:hover {
+        background-color: #28a745;
+        border-color: #28a745;
     }
 
     .upload-area {
@@ -169,6 +178,15 @@
         display: flex;
         gap: 0.5rem;
         justify-content: flex-end;
+    }
+
+    .modal-header {
+        border-color: #28a745;
+    }
+
+    .btn-primary {
+        background-color: #28a745;
+        border-color: #28a745;
     }
 </style>
 {% endblock %}
