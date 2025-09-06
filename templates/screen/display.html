@@ -295,7 +295,7 @@
             const file = files[index];
 
             // Definir o caminho baseado se é Instagram ou arquivo normal
-            const isInstagram = {{ screen.instagram_left|tojson if side == 'left' else screen.instagram_right|tojson }};
+            const isInstagram = side === 'left' ? {{ screen.instagram_left|tojson }} : {{ screen.instagram_right|tojson }};
             const mediaPath = isInstagram ? `/static/instagram/${file.file_name}` : `/static/files/${file.file_name}`;
 
             let mediaElement;
